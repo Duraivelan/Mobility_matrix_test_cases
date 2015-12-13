@@ -66,7 +66,7 @@ double Temp=0;
 double shear_rate = 0; //shear rate
 int ifshear = 0;// set equal to 1 for shear
 std::string dataFileName="1",dataFileName_new="1" ;
-int NrParticles=2;
+int NrParticles=4;
 double simu_time=dt;
 int step=0, nSteps=10000, frame=10;
 double vel_scale;
@@ -84,8 +84,8 @@ vector<SubData>  particle(NrParticles);
 
 // variables for mobility tensor calculation
 double eta_0=0.1;
-vctr3D Rij;
-double Rij2, Rij2_inv, temp, temp1, temp2, temp3, tau;
+vctr3D Rij , rij_unit ;
+double Rij2, Rij2_inv, temp, temp1, temp2, temp3, tau ;
 //
 
 if(ifrestart)	{
@@ -201,10 +201,11 @@ while (( next_file = readdir(theFolder)) )
    
    double mu_6N[36*NrParticles*NrParticles] ;  		// grand mobility matrix
    double zeta_6N[36*NrParticles*NrParticles] ;  	// grand resistance matrix
-   double diff_tt[3*3] ; 
-   for (int i=0; i<9; i++)
+   double xi_6x6[6*6] ; 							// generalized friction matrix
+   
+   for (int i=0; i<36; i++)
 		{
-			diff_tt[i] = 0; 
+			xi_6x6[i] = 0; 
 		}        
 		
 std::ofstream outFile1(dataFileName+"/data.dat");
@@ -215,18 +216,19 @@ for (int i=0; i<NrParticles; i++)
 			{
 				cout<<(i==j)<<endl;
 				Rij=particle[i].pos-particle[j].pos;
-				mtrx3D Pij (Rij, Rij) ; 
-				vctr3D col1(0, -Rij.comp[2], Rij.comp[1]);
-				vctr3D col2(Rij.comp[2],0,-Rij.comp[0]);
-				vctr3D col3(-Rij.comp[1],Rij.comp[0],0);
-				mtrx3D epsilon_rij(col1 , col2, col3);
+			//	rij_unit = 	Rij*(1.0/sqrt(Rij2)); 
+				mtrx3D Pij(Rij, Rij) ;
 				Rij2=Rij.norm2();
-				Rij2_inv=1/Rij2;
+				vctr3D col1(0.0, -Rij.comp[2], Rij.comp[1]);
+				vctr3D col2(Rij.comp[2],0.0,-Rij.comp[0]);
+				vctr3D col3(-Rij.comp[1],Rij.comp[0],0.0);
+				mtrx3D epsilon_rij(col1 , col2 , col3);
+				Rij2_inv=1.0/Rij2;
 				temp1=1.0/(8.0*M_PI*eta_0);
 				tau = 1.0/(6.0*M_PI*eta_0*particle[i].radius);
 				temp=temp1/(sqrt(Rij2));
 				temp2=temp1/(particle[i].radius*particle[i].radius*particle[i].radius);
-				temp3=temp/(2.0*Rij2);
+				temp3=temp/(2.0*sqrt(Rij2));
 				if(i==j) {
 				Mobility_Tnsr_tt	=	 	Unit_diag * tau ;
 											
@@ -243,18 +245,17 @@ for (int i=0; i<NrParticles; i++)
 				Mobility_Tnsr_rr	=		(Unit_diag*(-1.0) + (Pij)*Rij2_inv*3.0)*temp3 ;
 				
 				Mobility_Tnsr_rt	=	  	epsilon_rij*(-2.0)*temp3;
-				Mobility_Tnsr_tr	= 	Mobility_Tnsr_rt;
-												
+				Mobility_Tnsr_tr	= 	    Mobility_Tnsr_rt*(-1.0);												
 			 } 
 			
 			for (int k=0; k<3; k++)
 				{
 					for (int l=0; l<3; l++)
 						{
-							mu_6N[l+3*k+9*j+i*9*NrParticles] 								=	 Mobility_Tnsr_tt.comp[k][l];
+					/*		mu_6N[l+3*k+9*j+i*9*NrParticles] 								=	 Mobility_Tnsr_tt.comp[k][l];
 							mu_6N[l+3*k+9*j+i*9*NrParticles+ 9*NrParticles*NrParticles] 	=	 Mobility_Tnsr_tr.comp[k][l];
 							mu_6N[l+3*k+9*j+i*9*NrParticles+18*NrParticles*NrParticles] 	=	 Mobility_Tnsr_rt.comp[k][l];
-							mu_6N[l+3*k+9*j+i*9*NrParticles+27*NrParticles*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];							
+							mu_6N[l+3*k+9*j+i*9*NrParticles+27*NrParticles*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];		*/					
 							
 							zeta_6N[l+3*k+9*j+i*9*NrParticles] 								=	 Mobility_Tnsr_tt.comp[k][l];
 							zeta_6N[l+3*k+9*j+i*9*NrParticles+ 9*NrParticles*NrParticles] 	=	 Mobility_Tnsr_tr.comp[k][l];
@@ -264,37 +265,80 @@ for (int i=0; i<NrParticles; i++)
 				}	
 				
 			}	
+
 		}
 			
 	inverse ( zeta_6N , 6*NrParticles )	 ; 			
 				
 	Mobility_Tnsr_tt = null33D ; 
+	double Ai[3*3] , Aj[3*3]  ;			
+					
 					
 	for (int i=0; i<NrParticles; i++)
 		{
+			vctr3D col1 (  0.0 						,	particle[i].pos.comp[2] , -particle[i].pos.comp[1]	);
+			vctr3D col2 ( -particle[i].pos.comp[2] 	,   0.0						,  particle[i].pos.comp[0]	);
+			vctr3D col3 (  particle[i].pos.comp[1] 	,  -particle[i].pos.comp[0] , 0.0						);
+			mtrx3D	Ai(	col1 , col2 , col3 ) ;   
+					
 			for (int j=0; j<NrParticles; j++)
 				{
-					diff_tt[0] += zeta_6N[	 9*j + i*9*NrParticles] ;  
-					diff_tt[1] += zeta_6N[1+ 9*j + i*9*NrParticles] ;  
-					diff_tt[2] += zeta_6N[2+ 9*j + i*9*NrParticles] ;  
-					diff_tt[3] += zeta_6N[3+ 9*j + i*9*NrParticles] ;  
-					diff_tt[4] += zeta_6N[4+ 9*j + i*9*NrParticles] ;  
-					diff_tt[5] += zeta_6N[5+ 9*j + i*9*NrParticles] ;  
-					diff_tt[6] += zeta_6N[6+ 9*j + i*9*NrParticles] ;  
-					diff_tt[7] += zeta_6N[7+ 9*j + i*9*NrParticles] ;  
-					diff_tt[8] += zeta_6N[8+ 9*j + i*9*NrParticles] ;  
+					
+					vctr3D col4 (  0.0 						,	particle[j].pos.comp[2] , -particle[j].pos.comp[1]	);
+					vctr3D col5 ( -particle[j].pos.comp[2] 	,   0.0						,  particle[j].pos.comp[0]	);
+					vctr3D col6 (  particle[j].pos.comp[1] 	,  -particle[j].pos.comp[0] , 0.0						);
+					mtrx3D	Aj(	col4 , col5 , col6 ) ; 
+					
+					xi_6x6[0] += zeta_6N[	9*j + i*9*NrParticles] ;  
+					xi_6x6[1] += zeta_6N[1+ 9*j + i*9*NrParticles] ;  
+					xi_6x6[2] += zeta_6N[2+ 9*j + i*9*NrParticles] ;  
+					xi_6x6[3] += zeta_6N[3+ 9*j + i*9*NrParticles] ;  
+					xi_6x6[4] += zeta_6N[4+ 9*j + i*9*NrParticles] ;  
+					xi_6x6[5] += zeta_6N[5+ 9*j + i*9*NrParticles] ;  
+					xi_6x6[6] += zeta_6N[6+ 9*j + i*9*NrParticles] ;  
+					xi_6x6[7] += zeta_6N[7+ 9*j + i*9*NrParticles] ;  
+					xi_6x6[8] += zeta_6N[8+ 9*j + i*9*NrParticles] ;  					
+					
+				/*	xi_6x6[9]  += ( -zeta_6N[	9*j + i*9*NrParticles]*Aj[0] + zeta_6N[	 9*j + i*9*NrParticles + 9*NrParticles*NrParticles]) ;  
+					xi_6x6[10] += ( -zeta_6N[	9*j + i*9*NrParticles]*Aj[1] + zeta_6N[	 9*j + i*9*NrParticles + 9*NrParticles*NrParticles]) ;  
+					xi_6x6[11] += ( -zeta_6N[	9*j + i*9*NrParticles]*Aj[2] + zeta_6N[	 9*j + i*9*NrParticles + 9*NrParticles*NrParticles]) ;  
+					xi_6x6[12] += ( -zeta_6N[	9*j + i*9*NrParticles]*Aj[3] + zeta_6N[	 9*j + i*9*NrParticles + 9*NrParticles*NrParticles]) ;  
+					xi_6x6[13] += ( -zeta_6N[	9*j + i*9*NrParticles]*Aj[4] + zeta_6N[	 9*j + i*9*NrParticles + 9*NrParticles*NrParticles]) ;    
+					xi_6x6[14] += ( -zeta_6N[	9*j + i*9*NrParticles]*Aj[5] + zeta_6N[	 9*j + i*9*NrParticles + 9*NrParticles*NrParticles]) ;  
+					xi_6x6[15] += ( -zeta_6N[	9*j + i*9*NrParticles]*Aj[6] + zeta_6N[	 9*j + i*9*NrParticles + 9*NrParticles*NrParticles]) ;  
+					xi_6x6[16] += ( -zeta_6N[	9*j + i*9*NrParticles]*Aj[7] + zeta_6N[	 9*j + i*9*NrParticles + 9*NrParticles*NrParticles]) ;    
+					xi_6x6[17] += ( -zeta_6N[	9*j + i*9*NrParticles]*Aj[8] + zeta_6N[	 9*j + i*9*NrParticles + 9*NrParticles*NrParticles]) ;  
+					
+					xi_6x6[18] += ( zeta_6N[	9*j + i*9*NrParticles]*Ai[0] + zeta_6N[	 9*j + i*9*NrParticles + 18*NrParticles*NrParticles]) ;  
+					xi_6x6[19] += ( zeta_6N[	9*j + i*9*NrParticles]*Ai[1] + zeta_6N[	 9*j + i*9*NrParticles + 18*NrParticles*NrParticles]) ;  
+					xi_6x6[20] += ( zeta_6N[	9*j + i*9*NrParticles]*Ai[2] + zeta_6N[	 9*j + i*9*NrParticles + 18*NrParticles*NrParticles]) ;  
+					xi_6x6[21] += ( zeta_6N[	9*j + i*9*NrParticles]*Ai[3] + zeta_6N[	 9*j + i*9*NrParticles + 18*NrParticles*NrParticles]) ;  
+					xi_6x6[22] += ( zeta_6N[	9*j + i*9*NrParticles]*Ai[4] + zeta_6N[	 9*j + i*9*NrParticles + 18*NrParticles*NrParticles]) ;    
+					xi_6x6[23] += ( zeta_6N[	9*j + i*9*NrParticles]*Ai[5] + zeta_6N[	 9*j + i*9*NrParticles + 18*NrParticles*NrParticles]) ;  
+					xi_6x6[24] += ( zeta_6N[	9*j + i*9*NrParticles]*Ai[6] + zeta_6N[	 9*j + i*9*NrParticles + 18*NrParticles*NrParticles]) ;  
+					xi_6x6[25] += ( zeta_6N[	9*j + i*9*NrParticles]*Ai[7] + zeta_6N[	 9*j + i*9*NrParticles + 18*NrParticles*NrParticles]) ;    
+					xi_6x6[26] += ( zeta_6N[	9*j + i*9*NrParticles]*Ai[8] + zeta_6N[	 9*j + i*9*NrParticles + 18*NrParticles*NrParticles]) ;   */
+
+					xi_6x6[27] += zeta_6N[	 9*j + i*9*NrParticles +27*NrParticles*NrParticles] ;  
+					xi_6x6[28] += zeta_6N[1+ 9*j + i*9*NrParticles +27*NrParticles*NrParticles] ;  
+					xi_6x6[29] += zeta_6N[2+ 9*j + i*9*NrParticles +27*NrParticles*NrParticles] ;  
+					xi_6x6[30] += zeta_6N[3+ 9*j + i*9*NrParticles +27*NrParticles*NrParticles] ;  
+					xi_6x6[31] += zeta_6N[4+ 9*j + i*9*NrParticles +27*NrParticles*NrParticles] ;  
+					xi_6x6[32] += zeta_6N[5+ 9*j + i*9*NrParticles +27*NrParticles*NrParticles] ;  
+					xi_6x6[33] += zeta_6N[6+ 9*j + i*9*NrParticles +27*NrParticles*NrParticles] ;  
+					xi_6x6[34] += zeta_6N[7+ 9*j + i*9*NrParticles +27*NrParticles*NrParticles] ;  
+					xi_6x6[35] += zeta_6N[8+ 9*j + i*9*NrParticles +27*NrParticles*NrParticles] ;  										 
 				}
 		}
 				
-	inverse ( diff_tt , 3 )	 ; 			
+	inverse ( xi_6x6 , 6 )	 ; 			
 				
 	for (int i=0; i<NrParticles; i++)
 		{
-			outFile1<<"particle position"<<'\t'<<particle[i].pos.comp[0]<<'\t'<<particle[i].pos.comp[1]<<'\t'<<particle[i].pos.comp[2]<<std::endl ;
-		} 
-				
-		outFile1<<diff_tt[0]<<'\t'<<diff_tt[1]<<'\t'<<diff_tt[2]<<std::endl ;
-		outFile1<<diff_tt[3]<<'\t'<<diff_tt[4]<<'\t'<<diff_tt[5]<<std::endl ;
-		outFile1<<diff_tt[6]<<'\t'<<diff_tt[7]<<'\t'<<diff_tt[8]<<std::endl ;
+			outFile1<<"particle position"<<'\t'<<particle[i].pos.comp[0]<<'\t'<<particle[i].pos.comp[1]<<'\t'<<particle[i].pos.comp[2]<<'\t'<<particle[i].radius<<std::endl ;
+		} 	
+		outFile1<<xi_6x6[0]<<'\t'<<xi_6x6[1]<<'\t'<<xi_6x6[2]<<std::endl ;
+		outFile1<<xi_6x6[3]<<'\t'<<xi_6x6[4]<<'\t'<<xi_6x6[5]<<std::endl ;
+		outFile1<<xi_6x6[6]<<'\t'<<xi_6x6[7]<<'\t'<<xi_6x6[8]<<std::endl ;
 }
 		

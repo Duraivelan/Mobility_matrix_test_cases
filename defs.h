@@ -30,7 +30,7 @@ const double phis =4*epsilon*(pow(sigma/rs,12)-pow(sigma/rs,6));
 const double phicut =4*epsilon*(pow(sigma/r_cut,12)-pow(sigma/r_cut,6));
 const double sigma6 = sigma*sigma*sigma*sigma*sigma*sigma;
 const double sigma12 = sigma6*sigma6;
-const mtrx3D Unit_diag(1,1,1);
+const mtrx3D Unit_diag(1.0,1.0,1.0);
 
 #endif
 

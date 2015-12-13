@@ -26,16 +26,16 @@ void inverse(double* A, int N)
 using namespace std;
 int main(){
 
-    double A [10000*10000] ;
+    double A [3*3] = {10,2,3,40,5,6,7,8,10};
     
-    for(int i=0;i<100000000;i++) {
-		A[i]= rand();
-	}
+    cout<< A[0]<<'\t'<<A[1]<<endl;
+    cout<<A[2]<<'\t'<<A[3]<<endl;
 
-    inverse(A, 10000);
+    inverse(A, 2);
 
     cout<< A[0]<<'\t'<<A[1]<<endl;
     cout<<A[2]<<'\t'<<A[3]<<endl;
+
 
     return 0;
 }

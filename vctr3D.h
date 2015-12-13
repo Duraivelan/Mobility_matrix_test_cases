@@ -240,6 +240,13 @@ struct mtrx3D
     cout << setw(10) << comp[2][0] << "  " << setw(10) << comp[2][1] << "  " << setw(10) << comp[2][2] << endl;
   }
 
+  void writeToFile(ofstream &outputFile)
+	{
+    outputFile << '\t' << comp[0][0] <<'\t'<< comp[0][1] <<'\t'<< comp[0][2] << std::endl;
+    outputFile << '\t' << comp[1][0] <<'\t'<< comp[1][1] <<'\t'<< comp[1][2] << std::endl;
+    outputFile << '\t' << comp[2][0] <<'\t'<< comp[2][1] <<'\t'<< comp[2][2] << std::endl;
+  }
+
   double trace() const
   {
     return ( comp[0][0] + comp[1][1] + comp[2][2] );

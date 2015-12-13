@@ -66,7 +66,7 @@ double Temp=0;
 double shear_rate = 0; //shear rate
 int ifshear = 0;// set equal to 1 for shear
 std::string dataFileName="1",dataFileName_new="1" ;
-int NrParticles=4;
+int NrParticles=2;
 double simu_time=dt;
 int step=0, nSteps=10000, frame=10;
 double vel_scale;
@@ -83,7 +83,7 @@ double KE_rot=0;
 vector<SubData>  particle(NrParticles);
 
 // variables for mobility tensor calculation
-double eta_0=0.01;
+double eta_0=0.1;
 vctr3D Rij;
 double Rij2, Rij2_inv, temp, temp1, temp2, temp3, tau;
 //
@@ -199,11 +199,12 @@ while (( next_file = readdir(theFolder)) )
 	mtrx3D Mobility_Tnsr_rt;
 	mtrx3D Mobility_Tnsr_rr;
    
-   double mu_6N[36*NrParticles*NrParticles] ;
-   
-   for (int i=0; i<36*NrParticles; i++)
+   double mu_6N[36*NrParticles*NrParticles] ;  		// grand mobility matrix
+   double zeta_6N[36*NrParticles*NrParticles] ;  	// grand resistance matrix
+   double diff_tt[3*3] ; 
+   for (int i=0; i<9; i++)
 		{
-			mu_6N[i] = 0; 
+			diff_tt[i] = 0; 
 		}        
 		
 std::ofstream outFile1(dataFileName+"/data.dat");
@@ -214,6 +215,7 @@ for (int i=0; i<NrParticles; i++)
 			{
 				cout<<(i==j)<<endl;
 				Rij=particle[i].pos-particle[j].pos;
+				mtrx3D Pij (Rij, Rij) ; 
 				vctr3D col1(0, -Rij.comp[2], Rij.comp[1]);
 				vctr3D col2(Rij.comp[2],0,-Rij.comp[0]);
 				vctr3D col3(-Rij.comp[1],Rij.comp[0],0);
@@ -226,19 +228,19 @@ for (int i=0; i<NrParticles; i++)
 				temp2=temp1/(particle[i].radius*particle[i].radius*particle[i].radius);
 				temp3=temp/(2.0*Rij2);
 				if(i==j) {
-				Mobility_Tnsr_tt	=	 	Unit_diag * tau;
+				Mobility_Tnsr_tt	=	 	Unit_diag * tau ;
 											
-				Mobility_Tnsr_rr	=		Unit_diag*temp2 ;
+				Mobility_Tnsr_rr	=		Unit_diag * temp2 ;
 				Mobility_Tnsr_rt	= 		null33D ;
 				Mobility_Tnsr_tr	= 		null33D ;
 
 			 } else {
 				Mobility_Tnsr_tt	=	(	Unit_diag
-											+	(Rij^Rij)*Rij2_inv
-											+	(Unit_diag*(1.0/3.0)-(Rij^Rij)*Rij2_inv)*(particle[i].radius*particle[i].radius+particle[j].radius*particle[j].radius)*Rij2_inv
+											+	(Pij)*Rij2_inv
+											+	(Unit_diag*(1.0/3.0)-(Pij)*Rij2_inv)*(particle[i].radius*particle[i].radius+particle[j].radius*particle[j].radius)*Rij2_inv
 											)	*	temp;
 				
-				Mobility_Tnsr_rr	=		(Unit_diag*(-1.0) + (Rij^Rij)*Rij2_inv*3.0)*temp3 ;
+				Mobility_Tnsr_rr	=		(Unit_diag*(-1.0) + (Pij)*Rij2_inv*3.0)*temp3 ;
 				
 				Mobility_Tnsr_rt	=	  	epsilon_rij*(-2.0)*temp3;
 				Mobility_Tnsr_tr	= 	Mobility_Tnsr_rt;
@@ -252,16 +254,47 @@ for (int i=0; i<NrParticles; i++)
 							mu_6N[l+3*k+9*j+i*9*NrParticles] 								=	 Mobility_Tnsr_tt.comp[k][l];
 							mu_6N[l+3*k+9*j+i*9*NrParticles+ 9*NrParticles*NrParticles] 	=	 Mobility_Tnsr_tr.comp[k][l];
 							mu_6N[l+3*k+9*j+i*9*NrParticles+18*NrParticles*NrParticles] 	=	 Mobility_Tnsr_rt.comp[k][l];
-							mu_6N[l+3*k+9*j+i*9*NrParticles+27*NrParticles*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];
+							mu_6N[l+3*k+9*j+i*9*NrParticles+27*NrParticles*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];							
+							
+							zeta_6N[l+3*k+9*j+i*9*NrParticles] 								=	 Mobility_Tnsr_tt.comp[k][l];
+							zeta_6N[l+3*k+9*j+i*9*NrParticles+ 9*NrParticles*NrParticles] 	=	 Mobility_Tnsr_tr.comp[k][l];
+							zeta_6N[l+3*k+9*j+i*9*NrParticles+18*NrParticles*NrParticles] 	=	 Mobility_Tnsr_rt.comp[k][l];
+							zeta_6N[l+3*k+9*j+i*9*NrParticles+27*NrParticles*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];
 						}
 				}	
 				
 			}	
+		}
+			
+	inverse ( zeta_6N , 6*NrParticles )	 ; 			
+				
+	Mobility_Tnsr_tt = null33D ; 
 					
-	for (int i=0; i<36*NrParticles; i++)
+	for (int i=0; i<NrParticles; i++)
 		{
-			outFile1 << mu_6N[i] << endl;
+			for (int j=0; j<NrParticles; j++)
+				{
+					diff_tt[0] += zeta_6N[	 9*j + i*9*NrParticles] ;  
+					diff_tt[1] += zeta_6N[1+ 9*j + i*9*NrParticles] ;  
+					diff_tt[2] += zeta_6N[2+ 9*j + i*9*NrParticles] ;  
+					diff_tt[3] += zeta_6N[3+ 9*j + i*9*NrParticles] ;  
+					diff_tt[4] += zeta_6N[4+ 9*j + i*9*NrParticles] ;  
+					diff_tt[5] += zeta_6N[5+ 9*j + i*9*NrParticles] ;  
+					diff_tt[6] += zeta_6N[6+ 9*j + i*9*NrParticles] ;  
+					diff_tt[7] += zeta_6N[7+ 9*j + i*9*NrParticles] ;  
+					diff_tt[8] += zeta_6N[8+ 9*j + i*9*NrParticles] ;  
+				}
+		}
+				
+	inverse ( diff_tt , 3 )	 ; 			
+				
+	for (int i=0; i<NrParticles; i++)
+		{
+			outFile1<<"particle position"<<'\t'<<particle[i].pos.comp[0]<<'\t'<<particle[i].pos.comp[1]<<'\t'<<particle[i].pos.comp[2]<<std::endl ;
 		} 
-	}
+				
+		outFile1<<diff_tt[0]<<'\t'<<diff_tt[1]<<'\t'<<diff_tt[2]<<std::endl ;
+		outFile1<<diff_tt[3]<<'\t'<<diff_tt[4]<<'\t'<<diff_tt[5]<<std::endl ;
+		outFile1<<diff_tt[6]<<'\t'<<diff_tt[7]<<'\t'<<diff_tt[8]<<std::endl ;
 }
 		

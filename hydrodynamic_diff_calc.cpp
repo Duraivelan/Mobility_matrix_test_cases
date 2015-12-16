@@ -244,8 +244,8 @@ for (int i=0; i<NrParticles; i++)
 				
 				Mobility_Tnsr_rr	=		(Unit_diag*(-1.0) + (Pij)*Rij2_inv*3.0)*temp3 ;
 				
-				Mobility_Tnsr_rt	=	  	epsilon_rij*(-2.0)*temp3;
-				Mobility_Tnsr_tr	= 	    Mobility_Tnsr_rt*(-1.0);												
+				Mobility_Tnsr_tr	=	  	epsilon_rij*(-2.0)*temp3;
+				Mobility_Tnsr_rt	= 	    ~Mobility_Tnsr_tr;												
 			 } 
 			
 			for (int k=0; k<3; k++)
@@ -267,12 +267,18 @@ for (int i=0; i<NrParticles; i++)
 			}	
 
 		}
-			
-	inverse ( zeta_6N , 6*NrParticles )	 ; 			
-				
-	Mobility_Tnsr_tt = null33D ; 
-	double Ai[3*3] , Aj[3*3]  ;			
-					
+		
+	mtrx3D Resistance_Tnsr_tt;
+	mtrx3D Resistance_Tnsr_tr;
+	mtrx3D Resistance_Tnsr_rt;
+	mtrx3D Resistance_Tnsr_rr;	
+	
+	mtrx3D Friction_Tnsr_tt(0.0,0.0,0.0);
+	mtrx3D Friction_Tnsr_tr(0.0,0.0,0.0);
+	mtrx3D Friction_Tnsr_rt(0.0,0.0,0.0);
+	mtrx3D Friction_Tnsr_rr(0.0,0.0,0.0);
+   			
+	inverse ( zeta_6N , 6*NrParticles )	 ; 							
 					
 	for (int i=0; i<NrParticles; i++)
 		{
@@ -289,7 +295,24 @@ for (int i=0; i<NrParticles; i++)
 					vctr3D col6 (  particle[j].pos.comp[1] 	,  -particle[j].pos.comp[0] , 0.0						);
 					mtrx3D	Aj(	col4 , col5 , col6 ) ; 
 					
-					xi_6x6[0] += zeta_6N[	9*j + i*9*NrParticles] ;  
+					for (int k=0; k<3; k++)
+						{
+							for (int l=0; l<3; l++)
+								{
+							
+									Resistance_Tnsr_tt.comp[k][l] = zeta_6N[l+3*k+9*j+i*9*NrParticles] ;
+									Resistance_Tnsr_tr.comp[k][l] = zeta_6N[l+3*k+9*j+i*9*NrParticles+ 9*NrParticles*NrParticles]	;
+									Resistance_Tnsr_rt.comp[k][l] = zeta_6N[l+3*k+9*j+i*9*NrParticles+18*NrParticles*NrParticles] ;
+									Resistance_Tnsr_rr.comp[k][l] = zeta_6N[l+3*k+9*j+i*9*NrParticles+27*NrParticles*NrParticles] ;
+								}
+						}
+					
+					Friction_Tnsr_tt += Resistance_Tnsr_tt ;  
+					Friction_Tnsr_tr += ( Resistance_Tnsr_tr    -  ( Resistance_Tnsr_tt*Aj )  ) ;
+					Friction_Tnsr_rt += ( Ai*Resistance_Tnsr_tt +    Resistance_Tnsr_rt    )    ; 
+					Friction_Tnsr_rr += ( Resistance_Tnsr_rr    -  ( Resistance_Tnsr_rt*Aj ) + Ai*Resistance_Tnsr_tr - Ai*Resistance_Tnsr_tt*Aj ) ; 
+					
+			/*		xi_6x6[0] += zeta_6N[	9*j + i*9*NrParticles] ;  
 					xi_6x6[1] += zeta_6N[1+ 9*j + i*9*NrParticles] ;  
 					xi_6x6[2] += zeta_6N[2+ 9*j + i*9*NrParticles] ;  
 					xi_6x6[3] += zeta_6N[3+ 9*j + i*9*NrParticles] ;  
@@ -299,7 +322,7 @@ for (int i=0; i<NrParticles; i++)
 					xi_6x6[7] += zeta_6N[7+ 9*j + i*9*NrParticles] ;  
 					xi_6x6[8] += zeta_6N[8+ 9*j + i*9*NrParticles] ;  					
 					
-				/*	xi_6x6[9]  += ( -zeta_6N[	9*j + i*9*NrParticles]*Aj[0] + zeta_6N[	 9*j + i*9*NrParticles + 9*NrParticles*NrParticles]) ;  
+					xi_6x6[9]  += ( -zeta_6N[	9*j + i*9*NrParticles]*Aj[0] + zeta_6N[	 9*j + i*9*NrParticles + 9*NrParticles*NrParticles]) ;  
 					xi_6x6[10] += ( -zeta_6N[	9*j + i*9*NrParticles]*Aj[1] + zeta_6N[	 9*j + i*9*NrParticles + 9*NrParticles*NrParticles]) ;  
 					xi_6x6[11] += ( -zeta_6N[	9*j + i*9*NrParticles]*Aj[2] + zeta_6N[	 9*j + i*9*NrParticles + 9*NrParticles*NrParticles]) ;  
 					xi_6x6[12] += ( -zeta_6N[	9*j + i*9*NrParticles]*Aj[3] + zeta_6N[	 9*j + i*9*NrParticles + 9*NrParticles*NrParticles]) ;  
@@ -317,7 +340,7 @@ for (int i=0; i<NrParticles; i++)
 					xi_6x6[23] += ( zeta_6N[	9*j + i*9*NrParticles]*Ai[5] + zeta_6N[	 9*j + i*9*NrParticles + 18*NrParticles*NrParticles]) ;  
 					xi_6x6[24] += ( zeta_6N[	9*j + i*9*NrParticles]*Ai[6] + zeta_6N[	 9*j + i*9*NrParticles + 18*NrParticles*NrParticles]) ;  
 					xi_6x6[25] += ( zeta_6N[	9*j + i*9*NrParticles]*Ai[7] + zeta_6N[	 9*j + i*9*NrParticles + 18*NrParticles*NrParticles]) ;    
-					xi_6x6[26] += ( zeta_6N[	9*j + i*9*NrParticles]*Ai[8] + zeta_6N[	 9*j + i*9*NrParticles + 18*NrParticles*NrParticles]) ;   */
+					xi_6x6[26] += ( zeta_6N[	9*j + i*9*NrParticles]*Ai[8] + zeta_6N[	 9*j + i*9*NrParticles + 18*NrParticles*NrParticles]) ;   
 
 					xi_6x6[27] += zeta_6N[	 9*j + i*9*NrParticles +27*NrParticles*NrParticles] ;  
 					xi_6x6[28] += zeta_6N[1+ 9*j + i*9*NrParticles +27*NrParticles*NrParticles] ;  
@@ -327,10 +350,50 @@ for (int i=0; i<NrParticles; i++)
 					xi_6x6[32] += zeta_6N[5+ 9*j + i*9*NrParticles +27*NrParticles*NrParticles] ;  
 					xi_6x6[33] += zeta_6N[6+ 9*j + i*9*NrParticles +27*NrParticles*NrParticles] ;  
 					xi_6x6[34] += zeta_6N[7+ 9*j + i*9*NrParticles +27*NrParticles*NrParticles] ;  
-					xi_6x6[35] += zeta_6N[8+ 9*j + i*9*NrParticles +27*NrParticles*NrParticles] ;  										 
+					xi_6x6[35] += zeta_6N[8+ 9*j + i*9*NrParticles +27*NrParticles*NrParticles] ;  						*/				 
 				}
 		}
-				
+		
+					xi_6x6[0] += Friction_Tnsr_tt.comp[0][0] ;  
+					xi_6x6[1] += Friction_Tnsr_tt.comp[0][1] ;  
+					xi_6x6[2] += Friction_Tnsr_tt.comp[0][2] ; 
+					xi_6x6[3] += Friction_Tnsr_tt.comp[1][0] ; 
+					xi_6x6[4] += Friction_Tnsr_tt.comp[1][1] ;  
+					xi_6x6[5] += Friction_Tnsr_tt.comp[1][2] ;  
+					xi_6x6[6] += Friction_Tnsr_tt.comp[2][0] ;   
+					xi_6x6[7] += Friction_Tnsr_tt.comp[2][1] ; 
+					xi_6x6[8] += Friction_Tnsr_tt.comp[2][2] ; 				
+
+					xi_6x6[9]  += Friction_Tnsr_rt.comp[0][0] ;  
+					xi_6x6[10] += Friction_Tnsr_rt.comp[0][1] ;  
+					xi_6x6[11] += Friction_Tnsr_rt.comp[0][2] ; 
+					xi_6x6[12] += Friction_Tnsr_rt.comp[1][0] ; 
+					xi_6x6[13] += Friction_Tnsr_rt.comp[1][1] ;  
+					xi_6x6[14] += Friction_Tnsr_rt.comp[1][2] ;  
+					xi_6x6[15] += Friction_Tnsr_rt.comp[2][0] ;   
+					xi_6x6[16] += Friction_Tnsr_rt.comp[2][1] ; 
+					xi_6x6[17] += Friction_Tnsr_rt.comp[2][2] ; 				
+										
+					xi_6x6[18] += Friction_Tnsr_tr.comp[0][0] ;  
+					xi_6x6[19] += Friction_Tnsr_tr.comp[0][1] ;  
+					xi_6x6[20] += Friction_Tnsr_tr.comp[0][2] ; 
+					xi_6x6[21] += Friction_Tnsr_tr.comp[1][0] ; 
+					xi_6x6[22] += Friction_Tnsr_tr.comp[1][1] ;  
+					xi_6x6[23] += Friction_Tnsr_tr.comp[1][2] ;  
+					xi_6x6[24] += Friction_Tnsr_tr.comp[2][0] ;   
+					xi_6x6[25] += Friction_Tnsr_tr.comp[2][1] ; 
+					xi_6x6[26] += Friction_Tnsr_tr.comp[2][2] ; 				
+										
+					xi_6x6[27] += Friction_Tnsr_rr.comp[0][0] ;  
+					xi_6x6[28] += Friction_Tnsr_rr.comp[0][1] ;  
+					xi_6x6[29] += Friction_Tnsr_rr.comp[0][2] ; 
+					xi_6x6[30] += Friction_Tnsr_rr.comp[1][0] ; 
+					xi_6x6[31] += Friction_Tnsr_rr.comp[1][1] ;  
+					xi_6x6[32] += Friction_Tnsr_rr.comp[1][2] ;  
+					xi_6x6[33] += Friction_Tnsr_rr.comp[2][0] ;   
+					xi_6x6[34] += Friction_Tnsr_rr.comp[2][1] ; 
+					xi_6x6[35] += Friction_Tnsr_rr.comp[2][2] ; 				
+		
 	inverse ( xi_6x6 , 6 )	 ; 			
 				
 	for (int i=0; i<NrParticles; i++)

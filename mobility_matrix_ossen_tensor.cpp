@@ -55,8 +55,7 @@ std::vector<int> radialDistFunc(double XYZ[][3], double Lx,double Ly, double Lz,
 
 // forceUpdate fucntion included as force.h header file
 void verlet( vector<SubData>& particle ) {
-	
-	for(int i=0;i<NrParticles;i++) 
+	for(int i=0;i<NrParticles;i++)
 	{
 		particle[i].vel+=particle[i].frc*(0.5*dt*inv_mass);
 		particle[i].pos+=particle[i].vel*dt;
@@ -66,17 +65,17 @@ void verlet( vector<SubData>& particle ) {
 }
 
 void verletB(vector<SubData>& particle, double vel_scale) {
-	if(0) 
+	if(0)
 		{
-		for(int i=0;i<NrParticles;i++) 
+		for(int i=0;i<NrParticles;i++)
 			{
 				particle[i].vel+=particle[i].frc*(0.5*dt*inv_mass);
 				particle[i].vel=(particle[i].vel)*vel_scale;
 			}
-       	} 
-	else 
+       	}
+	else
 		{
-		for(int i=0;i<NrParticles;i++) 
+		for(int i=0;i<NrParticles;i++)
 			{
 				particle[i].vel+=particle[i].frc*(0.5*dt*inv_mass);
 			}
@@ -90,9 +89,9 @@ int main() {
    cout << "start time"<< '\t'<< ltm->tm_hour << ":";
    cout << ltm->tm_min << ":";
    cout << ltm->tm_sec << endl;
-         
+
 int if_create_particles = 0, ifrestart=1;
-         
+
 double kb=1 , T0=0.3, tauT=0.1;
 double Temp=0;
 double shear_rate = 0; //shear rate
@@ -138,14 +137,14 @@ else {
     std::string line;
     for (int i=0;i<NrParticles;i++) {
 		std::getline(dataFile,line);
-    	std::istringstream currentLine(line);    
+    	std::istringstream currentLine(line);
         currentLine >> particle[i].pos.comp[0];
         currentLine >> particle[i].pos.comp[1];
         currentLine >> particle[i].pos.comp[2];
 		currentLine >> particle[i].radius;
 		cout<<particle[i].radius<<endl;
     }
-}	
+}
 	fileName=dataFileName+"/Velocities.dat";
 	std::ifstream dataFile1(fileName);
 
@@ -155,7 +154,7 @@ else {
 else {
 	std::cout<<"Reading Vx, Vy, Vz Velocities"<<std::endl;
     std::string line;
-     
+
     for (int i=0;i<NrParticles;i++) {
 		std::getline(dataFile1,line);
     	std::istringstream currentLine(line);
@@ -164,7 +163,7 @@ else {
         currentLine >> particle[i].vel.comp[2];
 
     }
-}	
+}
 } else {
 
 	std::string fileName="../XYZ.dat";
@@ -197,11 +196,10 @@ else {
     	std::istringstream currentLine1(line1);
         currentLine1 >> particle[i].vel.comp[0];
         currentLine1 >> particle[i].vel.comp[1];
-        currentLine1 >> particle[i].vel.comp[2];  
+        currentLine1 >> particle[i].vel.comp[2];
         Temp+=0.5*m*(particle[i].vel.comp[0]*particle[i].vel.comp[0]
 				   + particle[i].vel.comp[1]*particle[i].vel.comp[1]
 				   + particle[i].vel.comp[2]*particle[i].vel.comp[2]);
-              
     }
     	Temp=(Temp)/(1.5*NrParticles*kb);
 		vel_scale = sqrt(T0/Temp);
@@ -209,7 +207,7 @@ else {
 
 }
 
-}		
+}
 //delete all files before writing data
 
 // following snippet taken from stakcflow link  http://stackoverflow.com/questions/11007494/how-to-delete-all-files-in-a-folder-but-not-delete-the-folder-c-linux
@@ -234,14 +232,14 @@ while (( next_file = readdir(theFolder)) )
 /* sort particles into cells */
 
 // 	Garcia de la Torre-Bloomfield Tensor calculation
-// 	based on the paper 
+// 	based on the paper
 //	Improved Calculation of Rotational Diffusion and Intrinsic Viscosity of Bead Models for
 //	Macromolecules and Nanoparticles, J. Phys. Chem. B 2007, 111, 955-961 .
 
 
 /*
- * snippet to call the HYDRO++ routine 
- * 
+ * snippet to call the HYDRO++ routine
+ *
 std::ofstream outFile7("square.dat");
 outFile7<<1<<",    !Unit of length for coordinates and radii, cm (10 A)"<<endl;
 outFile7<<4<<",        !Number of beads"<<endl;
@@ -251,7 +249,7 @@ for (int i=0; i<NrParticles; i++)
 		outFile7<<particle[i].pos.comp[0]<<'\t'<<particle[i].pos.comp[1]<<'\t'<<particle[i].pos.comp[2]<<'\t'<<particle[i].radius<<std::endl;
 	}
 system("../diffusion_tensor/hydro++10-lnx.exe < ../diffusion_tensor/input.txt");
-* 
+*
 */
 
 for (int i=0; i<NrParticles; i++)
@@ -273,7 +271,7 @@ for (int i=0; i<NrParticles; i++)
 				temp3=temp/(2.0*Rij2);
 				if(i==j) {
 				Mobility_Tnsr_tt[i][j]	=	 	Unit_diag * tau;
-											
+
 				Mobility_Tnsr_rr[i][j]	=		Unit_diag*temp2 ;
 				Mobility_Tnsr_rt[i][j]	= 		null33D ;
 				Mobility_Tnsr_tr[i][j]	= 		null33D ;
@@ -283,21 +281,18 @@ for (int i=0; i<NrParticles; i++)
 											+	(Rij^Rij)*Rij2_inv
 											+	(Unit_diag*(1.0/3.0)-(Rij^Rij)*Rij2_inv)*(particle[i].radius*particle[i].radius+particle[j].radius*particle[j].radius)*Rij2_inv
 											)	*	temp;
-				
+
 				Mobility_Tnsr_rr[i][j]	=		(Unit_diag*(-1.0) + (Rij^Rij)*Rij2_inv*3.0)*temp3 ;
-				
+
 				Mobility_Tnsr_rt[i][j]	=	  	epsilon_rij*(-2.0)*temp3;
 				Mobility_Tnsr_tr[i][j]	= 	Mobility_Tnsr_rt[i][j];
-												
-			 } 
+
+			 }
 			 	Mobility_Tnsr[i][j]		=	 Mobility_Tnsr_tt[i][j] -  Mobility_Tnsr_tr[i][j]*Mobility_Tnsr_rr[i][j]*Mobility_Tnsr_rt[i][j] ;
 
-				
-			}	
-	}	
-				
-	
-				
+			}
+	}
+
 std::ofstream outFile10(dataFileName+"/molibity_tensor_tt.dat");
 std::ofstream outFile11(dataFileName+"/molibity_tensor_tr.dat");
 std::ofstream outFile12(dataFileName+"/molibity_tensor_rr.dat");
@@ -311,11 +306,11 @@ for (int i=0; i<NrParticles; i++)
 				outFile10 << setw(10) << Mobility_Tnsr_tt[i][j].comp[0][0] << "  " << setw(10) << Mobility_Tnsr_tt[i][j].comp[0][1] << "  " << setw(10) << Mobility_Tnsr_tt[i][j].comp[0][2] << endl;
 				outFile10 << setw(10) << Mobility_Tnsr_tt[i][j].comp[1][0] << "  " << setw(10) << Mobility_Tnsr_tt[i][j].comp[1][1] << "  " << setw(10) << Mobility_Tnsr_tt[i][j].comp[1][2] << endl;
 				outFile10 << setw(10) << Mobility_Tnsr_tt[i][j].comp[2][0] << "  " << setw(10) << Mobility_Tnsr_tt[i][j].comp[2][1] << "  " << setw(10) << Mobility_Tnsr_tt[i][j].comp[2][2] << endl;
-				
+
 				outFile11 << setw(10) << Mobility_Tnsr_tr[i][j].comp[0][0] << "  " << setw(10) << Mobility_Tnsr_tr[i][j].comp[0][1] << "  " << setw(10) << Mobility_Tnsr_tr[i][j].comp[0][2] << endl;
 				outFile11 << setw(10) << Mobility_Tnsr_tr[i][j].comp[1][0] << "  " << setw(10) << Mobility_Tnsr_tr[i][j].comp[1][1] << "  " << setw(10) << Mobility_Tnsr_tr[i][j].comp[1][2] << endl;
 				outFile11 << setw(10) << Mobility_Tnsr_tr[i][j].comp[2][0] << "  " << setw(10) << Mobility_Tnsr_tr[i][j].comp[2][1] << "  " << setw(10) << Mobility_Tnsr_tr[i][j].comp[2][2] << endl;
-				
+
 				outFile12 << setw(10) << Mobility_Tnsr_rr[i][j].comp[0][0] << "  " << setw(10) << Mobility_Tnsr_rr[i][j].comp[0][1] << "  " << setw(10) << Mobility_Tnsr_rr[i][j].comp[0][2] << endl;
 				outFile12 << setw(10) << Mobility_Tnsr_rr[i][j].comp[1][0] << "  " << setw(10) << Mobility_Tnsr_rr[i][j].comp[1][1] << "  " << setw(10) << Mobility_Tnsr_rr[i][j].comp[1][2] << endl;
 				outFile12 << setw(10) << Mobility_Tnsr_rr[i][j].comp[2][0] << "  " << setw(10) << Mobility_Tnsr_rr[i][j].comp[2][1] << "  " << setw(10) << Mobility_Tnsr_rr[i][j].comp[2][2] << endl;
@@ -325,7 +320,7 @@ for (int i=0; i<NrParticles; i++)
 				outFile13 << setw(10) << Mobility_Tnsr[i][j].comp[2][0] << " \t " << setw(10) << Mobility_Tnsr[i][j].comp[2][1] << " \t " << setw(10) << Mobility_Tnsr[i][j].comp[2][2] << endl;
 
 			}
-	}					
+	}
 
 outFile10.close();
 

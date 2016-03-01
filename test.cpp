@@ -31,7 +31,7 @@ int main(){
     cout<< A[0]<<'\t'<<A[1]<<endl;
     cout<<A[2]<<'\t'<<A[3]<<endl;
 
-    inverse(A, 2);
+    inverse(A, 3);
 
     cout<< A[0]<<'\t'<<A[1]<<endl;
     cout<<A[2]<<'\t'<<A[3]<<endl;

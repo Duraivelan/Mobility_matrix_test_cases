@@ -66,7 +66,7 @@ double Temp=0;
 double shear_rate = 0; //shear rate
 int ifshear = 0;// set equal to 1 for shear
 std::string dataFileName="1",dataFileName_new="1" ;
-int NrParticles=4;
+int NrParticles=2;
 double simu_time=dt;
 int step=0, nSteps=10000, frame=10;
 double vel_scale;
@@ -205,7 +205,7 @@ while (( next_file = readdir(theFolder)) )
    
    for (int i=0; i<36; i++)
 		{
-			xi_6x6[i] = 0; 
+			xi_6x6[i] = 0.0; 
 		}        
 		
 std::ofstream outFile1(dataFileName+"/data.dat");
@@ -228,7 +228,7 @@ for (int i=0; i<NrParticles; i++)
 				tau = 1.0/(6.0*M_PI*eta_0*particle[i].radius);
 				temp=temp1/(sqrt(Rij2));
 				temp2=temp1/(particle[i].radius*particle[i].radius*particle[i].radius);
-				temp3=temp/(2.0*sqrt(Rij2));
+				temp3=temp/(2.0*(Rij2));
 				if(i==j) {
 				Mobility_Tnsr_tt	=	 	Unit_diag * tau ;
 											
@@ -353,47 +353,49 @@ for (int i=0; i<NrParticles; i++)
 					xi_6x6[35] += zeta_6N[8+ 9*j + i*9*NrParticles +27*NrParticles*NrParticles] ;  						*/				 
 				}
 		}
+					//Friction_Tnsr_rt = ~Friction_Tnsr_tr;
+
 									// column major format
 
-					xi_6x6[0] += Friction_Tnsr_tt.comp[0][0] ;  
-					xi_6x6[1] += Friction_Tnsr_tt.comp[0][1] ;  
-					xi_6x6[2] += Friction_Tnsr_tt.comp[0][2] ; 
-					xi_6x6[6] += Friction_Tnsr_tt.comp[1][0] ; 
-					xi_6x6[7] += Friction_Tnsr_tt.comp[1][1] ;  
-					xi_6x6[8] += Friction_Tnsr_tt.comp[1][2] ;  
-					xi_6x6[12] += Friction_Tnsr_tt.comp[2][0] ;   
-					xi_6x6[13] += Friction_Tnsr_tt.comp[2][1] ; 
-					xi_6x6[14] += Friction_Tnsr_tt.comp[2][2] ; 				
+					xi_6x6[0] = Friction_Tnsr_tt.comp[0][0] ;  
+					xi_6x6[1] = Friction_Tnsr_tt.comp[0][1] ;  
+					xi_6x6[2] = Friction_Tnsr_tt.comp[0][2] ; 
+					xi_6x6[6] = Friction_Tnsr_tt.comp[1][0] ; 
+					xi_6x6[7] = Friction_Tnsr_tt.comp[1][1] ;  
+					xi_6x6[8] = Friction_Tnsr_tt.comp[1][2] ;  
+					xi_6x6[12] = Friction_Tnsr_tt.comp[2][0] ;   
+					xi_6x6[13] = Friction_Tnsr_tt.comp[2][1] ; 
+					xi_6x6[14] = Friction_Tnsr_tt.comp[2][2] ; 				
 
-					xi_6x6[18]  += Friction_Tnsr_rt.comp[0][0] ;  
-					xi_6x6[19] += Friction_Tnsr_rt.comp[0][1] ;  
-					xi_6x6[20] += Friction_Tnsr_rt.comp[0][2] ; 
-					xi_6x6[24] += Friction_Tnsr_rt.comp[1][0] ; 
-					xi_6x6[25] += Friction_Tnsr_rt.comp[1][1] ;  
-					xi_6x6[26] += Friction_Tnsr_rt.comp[1][2] ;  
-					xi_6x6[30] += Friction_Tnsr_rt.comp[2][0] ;   
-					xi_6x6[31] += Friction_Tnsr_rt.comp[2][1] ; 
-					xi_6x6[32] += Friction_Tnsr_rt.comp[2][2] ; 				
+					xi_6x6[18] = Friction_Tnsr_rt.comp[0][0] ;  
+					xi_6x6[19] = Friction_Tnsr_rt.comp[0][1] ;  
+					xi_6x6[20] = Friction_Tnsr_rt.comp[0][2] ; 
+					xi_6x6[24] = Friction_Tnsr_rt.comp[1][0] ; 
+					xi_6x6[25] = Friction_Tnsr_rt.comp[1][1] ;  
+					xi_6x6[26] = Friction_Tnsr_rt.comp[1][2] ;  
+					xi_6x6[30] = Friction_Tnsr_rt.comp[2][0] ;   
+					xi_6x6[31] = Friction_Tnsr_rt.comp[2][1] ; 
+					xi_6x6[32] = Friction_Tnsr_rt.comp[2][2] ; 				
 										
-					xi_6x6[3] += Friction_Tnsr_tr.comp[0][0] ;  
-					xi_6x6[4] += Friction_Tnsr_tr.comp[0][1] ;  
-					xi_6x6[5] += Friction_Tnsr_tr.comp[0][2] ; 
-					xi_6x6[9] += Friction_Tnsr_tr.comp[1][0] ; 
-					xi_6x6[10] += Friction_Tnsr_tr.comp[1][1] ;  
-					xi_6x6[11] += Friction_Tnsr_tr.comp[1][2] ;  
-					xi_6x6[15] += Friction_Tnsr_tr.comp[2][0] ;   
-					xi_6x6[16] += Friction_Tnsr_tr.comp[2][1] ; 
-					xi_6x6[17] += Friction_Tnsr_tr.comp[2][2] ; 				
+					xi_6x6[3] = Friction_Tnsr_tr.comp[0][0] ;  
+					xi_6x6[4] = Friction_Tnsr_tr.comp[0][1] ;  
+					xi_6x6[5] = Friction_Tnsr_tr.comp[0][2] ; 
+					xi_6x6[9] = Friction_Tnsr_tr.comp[1][0] ; 
+					xi_6x6[10] = Friction_Tnsr_tr.comp[1][1] ;  
+					xi_6x6[11] = Friction_Tnsr_tr.comp[1][2] ;  
+					xi_6x6[15] = Friction_Tnsr_tr.comp[2][0] ;   
+					xi_6x6[16] = Friction_Tnsr_tr.comp[2][1] ; 
+					xi_6x6[17] = Friction_Tnsr_tr.comp[2][2] ; 				
 										
-					xi_6x6[21] += Friction_Tnsr_rr.comp[0][0] ;  
-					xi_6x6[22] += Friction_Tnsr_rr.comp[0][1] ;  
-					xi_6x6[23] += Friction_Tnsr_rr.comp[0][2] ; 
-					xi_6x6[27] += Friction_Tnsr_rr.comp[1][0] ; 
-					xi_6x6[28] += Friction_Tnsr_rr.comp[1][1] ;  
-					xi_6x6[29] += Friction_Tnsr_rr.comp[1][2] ;  
-					xi_6x6[33] += Friction_Tnsr_rr.comp[2][0] ;   
-					xi_6x6[34] += Friction_Tnsr_rr.comp[2][1] ; 
-					xi_6x6[35] += Friction_Tnsr_rr.comp[2][2] ; 				
+					xi_6x6[21] = Friction_Tnsr_rr.comp[0][0] ;  
+					xi_6x6[22] = Friction_Tnsr_rr.comp[0][1] ;  
+					xi_6x6[23] = Friction_Tnsr_rr.comp[0][2] ; 
+					xi_6x6[27] = Friction_Tnsr_rr.comp[1][0] ; 
+					xi_6x6[28] = Friction_Tnsr_rr.comp[1][1] ;  
+					xi_6x6[29] = Friction_Tnsr_rr.comp[1][2] ;  
+					xi_6x6[33] = Friction_Tnsr_rr.comp[2][0] ;   
+					xi_6x6[34] = Friction_Tnsr_rr.comp[2][1] ; 
+					xi_6x6[35] = Friction_Tnsr_rr.comp[2][2] ; 				
 		
 	inverse ( xi_6x6 , 6 )	 ; 			
 	for (int i=0; i<36; i++)

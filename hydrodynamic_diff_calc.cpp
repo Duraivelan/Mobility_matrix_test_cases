@@ -66,7 +66,7 @@ double Temp=0;
 double shear_rate = 0; //shear rate
 int ifshear = 0;// set equal to 1 for shear
 std::string dataFileName="1",dataFileName_new="1" ;
-int NrParticles=2;
+int NrParticles=4;
 double simu_time=dt;
 int step=0, nSteps=10000, frame=10;
 double vel_scale;
@@ -212,7 +212,7 @@ std::ofstream outFile1(dataFileName+"/data.dat");
 		
 for (int i=0; i<NrParticles; i++)
 	{
-		for (int j=0; j<NrParticles; j++)
+		for (int j=i; j<NrParticles; j++)
 			{
 				cout<<(i==j)<<endl;
 				Rij=particle[i].pos-particle[j].pos;
@@ -244,8 +244,8 @@ for (int i=0; i<NrParticles; i++)
 				
 				Mobility_Tnsr_rr	=		(Unit_diag*(-1.0) + (Pij)*Rij2_inv*3.0)*temp3 ;
 				
-				Mobility_Tnsr_tr	=	  	epsilon_rij*(-2.0)*temp3;
-				Mobility_Tnsr_rt	= 	    Mobility_Tnsr_tr*(-1.0);												
+				Mobility_Tnsr_rt	=	  	epsilon_rij*(2.0)*temp3;
+				Mobility_Tnsr_tr	= 	    Mobility_Tnsr_rt*(1.0);												
 			 } 
 			
 			for (int l=0; l<3; l++)
@@ -260,7 +260,11 @@ for (int i=0; i<NrParticles; i++)
 							zeta_6N[k+6*NrParticles*l+3*i+18*NrParticles*j] 					=	 Mobility_Tnsr_tt.comp[k][l];
 							zeta_6N[k+6*NrParticles*l+3*i+18*NrParticles*j+18*NrParticles*NrParticles] 	=	 Mobility_Tnsr_tr.comp[k][l];
 							zeta_6N[k+6*NrParticles*l+3*i+18*NrParticles*j+3*NrParticles] 	=	 Mobility_Tnsr_rt.comp[k][l];
-							zeta_6N[k+6*NrParticles*l+3*i+18*NrParticles*j+18*NrParticles*NrParticles+3*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];
+							zeta_6N[k+6*NrParticles*l+3*i+18*NrParticles*j+18*NrParticles*NrParticles+3*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];							
+							zeta_6N[k+6*NrParticles*l+3*j+18*NrParticles*i] 					=	 Mobility_Tnsr_tt.comp[k][l];
+							zeta_6N[k+6*NrParticles*l+3*j+18*NrParticles*i+18*NrParticles*NrParticles] 	=	 -Mobility_Tnsr_rt.comp[k][l];
+							zeta_6N[k+6*NrParticles*l+3*j+18*NrParticles*i+3*NrParticles] 	=	 -Mobility_Tnsr_rt.comp[k][l];
+							zeta_6N[k+6*NrParticles*l+3*j+18*NrParticles*i+18*NrParticles*NrParticles+3*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];
 						}
 				}	
 				
@@ -304,12 +308,13 @@ for (int i=0; i<NrParticles; i++)
 									Resistance_Tnsr_tr.comp[k][l] = zeta_6N[k+6*NrParticles*l+3*i+18*NrParticles*j+18*NrParticles*NrParticles]	;
 									Resistance_Tnsr_rt.comp[k][l] = zeta_6N[k+6*NrParticles*l+3*i+18*NrParticles*j+3*NrParticles] ;
 									Resistance_Tnsr_rr.comp[k][l] = zeta_6N[k+6*NrParticles*l+3*i+18*NrParticles*j+18*NrParticles*NrParticles+3*NrParticles] ;
+									
 								}
 						}
 					
 					Friction_Tnsr_tt += Resistance_Tnsr_tt ;  
 					Friction_Tnsr_tr += ( Resistance_Tnsr_tr    -  ( Resistance_Tnsr_tt*Aj )  ) ;
-					Friction_Tnsr_rt += ( Ai*Resistance_Tnsr_tt +    Resistance_Tnsr_rt    )    ; 
+					//Friction_Tnsr_rt += ( Ai*Resistance_Tnsr_tt +    Resistance_Tnsr_rt    )    ; 
 					Friction_Tnsr_rr += ( Resistance_Tnsr_rr    -  ( Resistance_Tnsr_rt*Aj ) + Ai*Resistance_Tnsr_tr - Ai*Resistance_Tnsr_tt*Aj ) ; 
 					
 			/*		xi_6x6[0] += zeta_6N[	9*j + i*9*NrParticles] ;  
@@ -353,7 +358,7 @@ for (int i=0; i<NrParticles; i++)
 					xi_6x6[35] += zeta_6N[8+ 9*j + i*9*NrParticles +27*NrParticles*NrParticles] ;  						*/				 
 				}
 		}
-					//Friction_Tnsr_rt = ~Friction_Tnsr_tr;
+					Friction_Tnsr_rt = ~Friction_Tnsr_tr;
 
 									// column major format
 
@@ -400,7 +405,7 @@ for (int i=0; i<NrParticles; i++)
 	inverse ( xi_6x6 , 6 )	 ; 			
 	for (int i=0; i<36; i++)
 		{
-			xi_6x6[i]*=4.0315e-14;	// multiply by kbT in erg K-1
+			xi_6x6[i]*=4.0472e-14;	// multiply by kbT in erg K-1
 		} 	
 			
 	for (int i=0; i<NrParticles; i++)

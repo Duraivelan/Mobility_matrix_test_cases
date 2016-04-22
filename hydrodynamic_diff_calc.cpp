@@ -405,7 +405,7 @@ for (int i=0; i<NrParticles; i++)
 	inverse ( xi_6x6 , 6 )	 ; 			
 	for (int i=0; i<36; i++)
 		{
-			xi_6x6[i]*=4.0472e-14;	// multiply by kbT in erg K-1
+			xi_6x6[i]*=4.1419e-14;	// multiply by kbT in erg K-1
 		} 	
 			
 	for (int i=0; i<NrParticles; i++)

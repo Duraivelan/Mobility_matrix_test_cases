@@ -66,7 +66,7 @@ double Temp=0;
 double shear_rate = 0; //shear rate
 int ifshear = 0;// set equal to 1 for shear
 std::string dataFileName="1",dataFileName_new="1" ;
-int NrParticles=4;
+int NrParticles=3;
 double simu_time=dt;
 int step=0, nSteps=10000, frame=10;
 double vel_scale;
@@ -407,7 +407,91 @@ for (int i=0; i<NrParticles; i++)
 		{
 			xi_6x6[i]*=4.1419e-14;	// multiply by kbT in erg K-1
 		} 	
-			
+
+// center of diffusion calculation based on "Hydrodynamic properties of rigid particles: comparison of different modeling and computational procedures." Biophysical journal 76.6 (1999): 3044-3057.			
+// Page 3046 equation 13.
+vctr3D ctr_diff ; 
+double temp_mat[3*3];
+temp_mat[0] =  xi_6x6[28] + xi_6x6[35]	;
+temp_mat[1] = -xi_6x6[27] 				; 
+temp_mat[2] = -xi_6x6[33]				; 
+temp_mat[3] = -xi_6x6[27]				;
+temp_mat[4] =  xi_6x6[21] + xi_6x6[35]	;
+temp_mat[5] = -xi_6x6[34]				;
+temp_mat[6] = -xi_6x6[33]				;
+temp_mat[7] = -xi_6x6[34]				;
+temp_mat[8] =  xi_6x6[28] + xi_6x6[21]	;
+
+inverse ( temp_mat , 3 )	 ; 	
+
+ctr_diff.comp[0] = temp_mat[0]*(xi_6x6[16] - xi_6x6[11]) + temp_mat[3]*(xi_6x6[5] - xi_6x6[15]) + temp_mat[6]*(xi_6x6[9] - xi_6x6[4]) ;
+ctr_diff.comp[1] = temp_mat[1]*(xi_6x6[16] - xi_6x6[11]) + temp_mat[4]*(xi_6x6[5] - xi_6x6[15]) + temp_mat[7]*(xi_6x6[9] - xi_6x6[4]) ;
+ctr_diff.comp[2] = temp_mat[2]*(xi_6x6[16] - xi_6x6[11]) + temp_mat[5]*(xi_6x6[5] - xi_6x6[15]) + temp_mat[8]*(xi_6x6[9] - xi_6x6[4]) ;
+
+mtrx3D D_tt, D_tr, D_rt , D_rr, U_OD;
+
+D_tt.comp[0][0] = xi_6x6[0];
+D_tt.comp[1][0] = xi_6x6[1];
+D_tt.comp[2][0] = xi_6x6[2];
+D_tt.comp[0][1] = xi_6x6[6];
+D_tt.comp[1][1] = xi_6x6[7];
+D_tt.comp[2][1] = xi_6x6[8];
+D_tt.comp[0][2] = xi_6x6[12];
+D_tt.comp[1][2] = xi_6x6[13];
+D_tt.comp[2][2] = xi_6x6[14];
+
+D_tr.comp[0][0] = xi_6x6[3];
+D_tr.comp[1][0] = xi_6x6[4];
+D_tr.comp[2][0] = xi_6x6[5];
+D_tr.comp[0][1] = xi_6x6[9];
+D_tr.comp[1][1] = xi_6x6[10];
+D_tr.comp[2][1] = xi_6x6[11];
+D_tr.comp[0][2] = xi_6x6[15];
+D_tr.comp[1][2] = xi_6x6[16];
+D_tr.comp[2][2] = xi_6x6[17];
+
+D_rt.comp[0][0] = xi_6x6[18];
+D_rt.comp[1][0] = xi_6x6[19];
+D_rt.comp[2][0] = xi_6x6[20];
+D_rt.comp[0][1] = xi_6x6[24];
+D_rt.comp[1][1] = xi_6x6[25];
+D_rt.comp[2][1] = xi_6x6[26];
+D_rt.comp[0][2] = xi_6x6[30];
+D_rt.comp[1][2] = xi_6x6[31];
+D_rt.comp[2][2] = xi_6x6[32];
+
+D_rr.comp[0][0] = xi_6x6[21];
+D_rr.comp[1][0] = xi_6x6[22];
+D_rr.comp[2][0] = xi_6x6[23];
+D_rr.comp[0][1] = xi_6x6[27];
+D_rr.comp[1][1] = xi_6x6[28];
+D_rr.comp[2][1] = xi_6x6[29];
+D_rr.comp[0][2] = xi_6x6[33];
+D_rr.comp[1][2] = xi_6x6[34];
+D_rr.comp[2][2] = xi_6x6[35];
+
+U_OD.comp[0][0] =  0.0;
+U_OD.comp[1][0] =  ctr_diff.comp[2];
+U_OD.comp[2][0] = -ctr_diff.comp[1];
+U_OD.comp[0][1] = -ctr_diff.comp[2];
+U_OD.comp[1][1] =  0.0;
+U_OD.comp[2][1] =  ctr_diff.comp[0];
+U_OD.comp[0][2] =  ctr_diff.comp[1];
+U_OD.comp[1][2] = -ctr_diff.comp[0];
+U_OD.comp[2][2] =  0.0;
+
+mtrx3D D_tt_CoD = D_tt -  U_OD*D_rr*U_OD + D_rt*U_OD - U_OD*D_tr ; 
+
+xi_6x6[0]  = D_tt_CoD.comp[0][0];
+xi_6x6[1]  = D_tt_CoD.comp[1][0];
+xi_6x6[2]  = D_tt_CoD.comp[2][0];
+xi_6x6[6]  = D_tt_CoD.comp[0][1];
+xi_6x6[7]  = D_tt_CoD.comp[1][1];
+xi_6x6[8]  = D_tt_CoD.comp[2][1];
+xi_6x6[12] = D_tt_CoD.comp[0][2];
+xi_6x6[13] = D_tt_CoD.comp[1][2];
+xi_6x6[14] = D_tt_CoD.comp[2][2];
+
 	for (int i=0; i<NrParticles; i++)
 		{
 			outFile1<<"particle position"<<'\t'<<particle[i].pos.comp[0]<<'\t'<<particle[i].pos.comp[1]<<'\t'<<particle[i].pos.comp[2]<<'\t'<<particle[i].radius<<std::endl ;
@@ -420,6 +504,10 @@ for (int i=0; i<NrParticles; i++)
 		outFile1<<xi_6x6[3]<<'\t'<<xi_6x6[9]<<'\t'<<xi_6x6[15]<<'\t'<<xi_6x6[21]<<'\t'<<xi_6x6[27]<<'\t'<<xi_6x6[33]<<std::endl ;
 		outFile1<<xi_6x6[4]<<'\t'<<xi_6x6[10]<<'\t'<<xi_6x6[16]<<'\t'<<xi_6x6[22]<<'\t'<<xi_6x6[28]<<'\t'<<xi_6x6[34]<<std::endl ;
 		outFile1<<xi_6x6[5]<<'\t'<<xi_6x6[11]<<'\t'<<xi_6x6[17]<<'\t'<<xi_6x6[23]<<'\t'<<xi_6x6[29]<<'\t'<<xi_6x6[35]<<std::endl ;
+		
+		outFile1<<ctr_diff.comp[0]<<'\t'<<ctr_diff.comp[1]<<'\t'<<ctr_diff.comp[2]<<std::endl ;
+		
+		D_tt_CoD.echo(); 
 
 
 }

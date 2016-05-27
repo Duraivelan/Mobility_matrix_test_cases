@@ -481,6 +481,8 @@ U_OD.comp[1][2] = -ctr_diff.comp[0];
 U_OD.comp[2][2] =  0.0;
 
 mtrx3D D_tt_CoD = D_tt -  U_OD*D_rr*U_OD + D_rt*U_OD - U_OD*D_tr ; 
+mtrx3D D_tr_CoD = D_tr +  D_rr*U_OD ;  // based on equations 42 from Wouter's notes "clusterdyn"
+mtrx3D D_rt_CoD = D_rt -  U_OD*D_rr ;  // based on equations 43 from Wouter's notes "clusterdyn"
 
 xi_6x6[0]  = D_tt_CoD.comp[0][0];
 xi_6x6[1]  = D_tt_CoD.comp[1][0];
@@ -491,6 +493,26 @@ xi_6x6[8]  = D_tt_CoD.comp[2][1];
 xi_6x6[12] = D_tt_CoD.comp[0][2];
 xi_6x6[13] = D_tt_CoD.comp[1][2];
 xi_6x6[14] = D_tt_CoD.comp[2][2];
+
+xi_6x6[3]  = D_tr_CoD.comp[0][0];
+xi_6x6[4]  = D_tr_CoD.comp[1][0];
+xi_6x6[5]  = D_tr_CoD.comp[2][0];
+xi_6x6[9]  = D_tr_CoD.comp[0][1];
+xi_6x6[10] = D_tr_CoD.comp[1][1];
+xi_6x6[11] = D_tr_CoD.comp[2][1];
+xi_6x6[15] = D_tr_CoD.comp[0][2];
+xi_6x6[16] = D_tr_CoD.comp[1][2];
+xi_6x6[17] = D_tr_CoD.comp[2][2];
+
+xi_6x6[18]  = D_rt_CoD.comp[0][0];
+xi_6x6[19]  = D_rt_CoD.comp[1][0];
+xi_6x6[20]  = D_rt_CoD.comp[2][0];
+xi_6x6[24]  = D_rt_CoD.comp[0][1];
+xi_6x6[25]  = D_rt_CoD.comp[1][1];
+xi_6x6[26]  = D_rt_CoD.comp[2][1];
+xi_6x6[30]  = D_rt_CoD.comp[0][2];
+xi_6x6[31]  = D_rt_CoD.comp[1][2];
+xi_6x6[32]  = D_rt_CoD.comp[2][2];
 
 	for (int i=0; i<NrParticles; i++)
 		{

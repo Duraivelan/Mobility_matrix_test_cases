@@ -198,14 +198,35 @@ while (( next_file = readdir(theFolder)) )
 	mtrx3D Mobility_Tnsr_tr;
 	mtrx3D Mobility_Tnsr_rt;
 	mtrx3D Mobility_Tnsr_rr;
+	mtrx35D Mobility_Tnsr_td;
+	mtrx35D Mobility_Tnsr_rd;
+	mtrx53D Mobility_Tnsr_dt;
+	mtrx53D Mobility_Tnsr_dr;
+	mtrx55D Mobility_Tnsr_dd;
+	
+// three index mobility matrices	
+	double mu_td_abc[3][3][3];
+	double mu_rd_abc[3][3][3];
+	double mu_dt_abc[3][3][3];
+	double mu_dr_abc[3][3][3];
+	
+// the five base matrices for strain tensor // option 5 :  equation 419 wouter's tex version clusterdyn_110816_1556
+
+	double e[5][3][3]= {
+							{{0.0,1.0,0.0},{1.0,0.0,0.0},{0.0,0.0,0.0}},
+							{{0.0,0.0,1.0},{0.0,0.0,0.0},{1.0,0.0,0.0}},
+							{{0.0,0.0,0.0},{0.0,0.0,1.0},{0.0,1.0,0.0}},
+							{{1.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,-1.0}},
+							{{0.0,0.0,0.0},{0.0,1.0,0.0},{0.0,0.0,-1.0}}
+						};
    
-   double mu_6N[36*NrParticles*NrParticles] ;  		// grand mobility matrix
-   double zeta_6N[36*NrParticles*NrParticles] ;  	// grand resistance matrix
-   double xi_6x6[6*6] ; 							// generalized friction matrix
+   double mu_11N[121*NrParticles*NrParticles] ;  		// grand mobility matrix
+   double zeta_11N[121*NrParticles*NrParticles] ;  	// grand resistance matrix
+   double xi_11x11[11*11] ; 							// generalized friction matrix
    
-   for (int i=0; i<36; i++)
+   for (int i=0; i<121; i++)
 		{
-			xi_6x6[i] = 0.0; 
+			xi_11x11[i] = 0.0; 
 		}        
 		
 std::ofstream outFile1(dataFileName+"/data.dat");
@@ -235,6 +256,8 @@ for (int i=0; i<NrParticles; i++)
 				Mobility_Tnsr_rr	=		Unit_diag * temp2 ;
 				Mobility_Tnsr_rt	= 		null33D ;
 				Mobility_Tnsr_tr	= 		null33D ;
+				Mobility_Tnsr_td	= 		null35D ;
+				Mobility_Tnsr_dt	= 		null53D ;
 
 			 } else {
 				Mobility_Tnsr_tt	=	(	Unit_diag
@@ -257,14 +280,14 @@ for (int i=0; i<NrParticles; i++)
 							mu_6N[l+3*k+9*j+i*9*NrParticles+18*NrParticles*NrParticles] 	=	 Mobility_Tnsr_rt.comp[k][l];
 							mu_6N[l+3*k+9*j+i*9*NrParticles+27*NrParticles*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];		*/					
 							// column major format
-							zeta_6N[k+6*NrParticles*l+3*i+18*NrParticles*j] 					=	 Mobility_Tnsr_tt.comp[k][l];
-							zeta_6N[k+6*NrParticles*l+3*i+18*NrParticles*j+18*NrParticles*NrParticles] 	=	 Mobility_Tnsr_tr.comp[k][l];
-							zeta_6N[k+6*NrParticles*l+3*i+18*NrParticles*j+3*NrParticles] 	=	 Mobility_Tnsr_rt.comp[k][l];
-							zeta_6N[k+6*NrParticles*l+3*i+18*NrParticles*j+18*NrParticles*NrParticles+3*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];							
-							zeta_6N[k+6*NrParticles*l+3*j+18*NrParticles*i] 					=	 Mobility_Tnsr_tt.comp[k][l];
-							zeta_6N[k+6*NrParticles*l+3*j+18*NrParticles*i+18*NrParticles*NrParticles] 	=	 -Mobility_Tnsr_rt.comp[k][l];
-							zeta_6N[k+6*NrParticles*l+3*j+18*NrParticles*i+3*NrParticles] 	=	 -Mobility_Tnsr_rt.comp[k][l];
-							zeta_6N[k+6*NrParticles*l+3*j+18*NrParticles*i+18*NrParticles*NrParticles+3*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];
+							zeta_11N[k+6*NrParticles*l+3*i+18*NrParticles*j] 					=	 Mobility_Tnsr_tt.comp[k][l];
+							zeta_11N[k+6*NrParticles*l+3*i+18*NrParticles*j+18*NrParticles*NrParticles] 	=	 Mobility_Tnsr_tr.comp[k][l];
+							zeta_11N[k+6*NrParticles*l+3*i+18*NrParticles*j+3*NrParticles] 	=	 Mobility_Tnsr_rt.comp[k][l];
+							zeta_11N[k+6*NrParticles*l+3*i+18*NrParticles*j+18*NrParticles*NrParticles+3*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];							
+							zeta_11N[k+6*NrParticles*l+3*j+18*NrParticles*i] 					=	 Mobility_Tnsr_tt.comp[k][l];
+							zeta_11N[k+6*NrParticles*l+3*j+18*NrParticles*i+18*NrParticles*NrParticles] 	=	 -Mobility_Tnsr_rt.comp[k][l];
+							zeta_11N[k+6*NrParticles*l+3*j+18*NrParticles*i+3*NrParticles] 	=	 -Mobility_Tnsr_rt.comp[k][l];
+							zeta_11N[k+6*NrParticles*l+3*j+18*NrParticles*i+18*NrParticles*NrParticles+3*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];
 						}
 				}	
 				
@@ -282,7 +305,7 @@ for (int i=0; i<NrParticles; i++)
 	mtrx3D Friction_Tnsr_rt(0.0,0.0,0.0);
 	mtrx3D Friction_Tnsr_rr(0.0,0.0,0.0);
    			
-	inverse ( zeta_6N , 6*NrParticles )	 ; 							
+	inverse ( zeta_11N , 6*NrParticles )	 ; 							
 					
 	for (int i=0; i<NrParticles; i++)
 		{
@@ -304,10 +327,10 @@ for (int i=0; i<NrParticles; i++)
 							for (int k=0; k<3; k++)
 								{
 							
-									Resistance_Tnsr_tt.comp[k][l] = zeta_6N[k+6*NrParticles*l+3*i+18*NrParticles*j] ;
-									Resistance_Tnsr_tr.comp[k][l] = zeta_6N[k+6*NrParticles*l+3*i+18*NrParticles*j+18*NrParticles*NrParticles]	;
-									Resistance_Tnsr_rt.comp[k][l] = zeta_6N[k+6*NrParticles*l+3*i+18*NrParticles*j+3*NrParticles] ;
-									Resistance_Tnsr_rr.comp[k][l] = zeta_6N[k+6*NrParticles*l+3*i+18*NrParticles*j+18*NrParticles*NrParticles+3*NrParticles] ;
+									Resistance_Tnsr_tt.comp[k][l] = zeta_11N[k+6*NrParticles*l+3*i+18*NrParticles*j] ;
+									Resistance_Tnsr_tr.comp[k][l] = zeta_11N[k+6*NrParticles*l+3*i+18*NrParticles*j+18*NrParticles*NrParticles]	;
+									Resistance_Tnsr_rt.comp[k][l] = zeta_11N[k+6*NrParticles*l+3*i+18*NrParticles*j+3*NrParticles] ;
+									Resistance_Tnsr_rr.comp[k][l] = zeta_11N[k+6*NrParticles*l+3*i+18*NrParticles*j+18*NrParticles*NrParticles+3*NrParticles] ;
 									
 								}
 						}
@@ -362,113 +385,113 @@ for (int i=0; i<NrParticles; i++)
 
 									// column major format
 
-					xi_6x6[0] = Friction_Tnsr_tt.comp[0][0] ;  
-					xi_6x6[1] = Friction_Tnsr_tt.comp[0][1] ;  
-					xi_6x6[2] = Friction_Tnsr_tt.comp[0][2] ; 
-					xi_6x6[6] = Friction_Tnsr_tt.comp[1][0] ; 
-					xi_6x6[7] = Friction_Tnsr_tt.comp[1][1] ;  
-					xi_6x6[8] = Friction_Tnsr_tt.comp[1][2] ;  
-					xi_6x6[12] = Friction_Tnsr_tt.comp[2][0] ;   
-					xi_6x6[13] = Friction_Tnsr_tt.comp[2][1] ; 
-					xi_6x6[14] = Friction_Tnsr_tt.comp[2][2] ; 				
+					xi_11x11[0] = Friction_Tnsr_tt.comp[0][0] ;  
+					xi_11x11[1] = Friction_Tnsr_tt.comp[0][1] ;  
+					xi_11x11[2] = Friction_Tnsr_tt.comp[0][2] ; 
+					xi_11x11[6] = Friction_Tnsr_tt.comp[1][0] ; 
+					xi_11x11[7] = Friction_Tnsr_tt.comp[1][1] ;  
+					xi_11x11[8] = Friction_Tnsr_tt.comp[1][2] ;  
+					xi_11x11[12] = Friction_Tnsr_tt.comp[2][0] ;   
+					xi_11x11[13] = Friction_Tnsr_tt.comp[2][1] ; 
+					xi_11x11[14] = Friction_Tnsr_tt.comp[2][2] ; 				
 
-					xi_6x6[18] = Friction_Tnsr_rt.comp[0][0] ;  
-					xi_6x6[19] = Friction_Tnsr_rt.comp[0][1] ;  
-					xi_6x6[20] = Friction_Tnsr_rt.comp[0][2] ; 
-					xi_6x6[24] = Friction_Tnsr_rt.comp[1][0] ; 
-					xi_6x6[25] = Friction_Tnsr_rt.comp[1][1] ;  
-					xi_6x6[26] = Friction_Tnsr_rt.comp[1][2] ;  
-					xi_6x6[30] = Friction_Tnsr_rt.comp[2][0] ;   
-					xi_6x6[31] = Friction_Tnsr_rt.comp[2][1] ; 
-					xi_6x6[32] = Friction_Tnsr_rt.comp[2][2] ; 				
+					xi_11x11[18] = Friction_Tnsr_rt.comp[0][0] ;  
+					xi_11x11[19] = Friction_Tnsr_rt.comp[0][1] ;  
+					xi_11x11[20] = Friction_Tnsr_rt.comp[0][2] ; 
+					xi_11x11[24] = Friction_Tnsr_rt.comp[1][0] ; 
+					xi_11x11[25] = Friction_Tnsr_rt.comp[1][1] ;  
+					xi_11x11[26] = Friction_Tnsr_rt.comp[1][2] ;  
+					xi_11x11[30] = Friction_Tnsr_rt.comp[2][0] ;   
+					xi_11x11[31] = Friction_Tnsr_rt.comp[2][1] ; 
+					xi_11x11[32] = Friction_Tnsr_rt.comp[2][2] ; 				
 										
-					xi_6x6[3] = Friction_Tnsr_tr.comp[0][0] ;  
-					xi_6x6[4] = Friction_Tnsr_tr.comp[0][1] ;  
-					xi_6x6[5] = Friction_Tnsr_tr.comp[0][2] ; 
-					xi_6x6[9] = Friction_Tnsr_tr.comp[1][0] ; 
-					xi_6x6[10] = Friction_Tnsr_tr.comp[1][1] ;  
-					xi_6x6[11] = Friction_Tnsr_tr.comp[1][2] ;  
-					xi_6x6[15] = Friction_Tnsr_tr.comp[2][0] ;   
-					xi_6x6[16] = Friction_Tnsr_tr.comp[2][1] ; 
-					xi_6x6[17] = Friction_Tnsr_tr.comp[2][2] ; 				
+					xi_11x11[3] = Friction_Tnsr_tr.comp[0][0] ;  
+					xi_11x11[4] = Friction_Tnsr_tr.comp[0][1] ;  
+					xi_11x11[5] = Friction_Tnsr_tr.comp[0][2] ; 
+					xi_11x11[9] = Friction_Tnsr_tr.comp[1][0] ; 
+					xi_11x11[10] = Friction_Tnsr_tr.comp[1][1] ;  
+					xi_11x11[11] = Friction_Tnsr_tr.comp[1][2] ;  
+					xi_11x11[15] = Friction_Tnsr_tr.comp[2][0] ;   
+					xi_11x11[16] = Friction_Tnsr_tr.comp[2][1] ; 
+					xi_11x11[17] = Friction_Tnsr_tr.comp[2][2] ; 				
 										
-					xi_6x6[21] = Friction_Tnsr_rr.comp[0][0] ;  
-					xi_6x6[22] = Friction_Tnsr_rr.comp[0][1] ;  
-					xi_6x6[23] = Friction_Tnsr_rr.comp[0][2] ; 
-					xi_6x6[27] = Friction_Tnsr_rr.comp[1][0] ; 
-					xi_6x6[28] = Friction_Tnsr_rr.comp[1][1] ;  
-					xi_6x6[29] = Friction_Tnsr_rr.comp[1][2] ;  
-					xi_6x6[33] = Friction_Tnsr_rr.comp[2][0] ;   
-					xi_6x6[34] = Friction_Tnsr_rr.comp[2][1] ; 
-					xi_6x6[35] = Friction_Tnsr_rr.comp[2][2] ; 				
+					xi_11x11[21] = Friction_Tnsr_rr.comp[0][0] ;  
+					xi_11x11[22] = Friction_Tnsr_rr.comp[0][1] ;  
+					xi_11x11[23] = Friction_Tnsr_rr.comp[0][2] ; 
+					xi_11x11[27] = Friction_Tnsr_rr.comp[1][0] ; 
+					xi_11x11[28] = Friction_Tnsr_rr.comp[1][1] ;  
+					xi_11x11[29] = Friction_Tnsr_rr.comp[1][2] ;  
+					xi_11x11[33] = Friction_Tnsr_rr.comp[2][0] ;   
+					xi_11x11[34] = Friction_Tnsr_rr.comp[2][1] ; 
+					xi_11x11[35] = Friction_Tnsr_rr.comp[2][2] ; 				
 		
-	inverse ( xi_6x6 , 6 )	 ; 			
+	inverse ( xi_11x11 , 6 )	 ; 			
 	for (int i=0; i<36; i++)
 		{
-			xi_6x6[i]*=4.1419e-14;	// multiply by kbT in erg K-1
+			xi_11x11[i]*=4.1419e-14;	// multiply by kbT in erg K-1
 		} 	
 
 // center of diffusion calculation based on "Hydrodynamic properties of rigid particles: comparison of different modeling and computational procedures." Biophysical journal 76.6 (1999): 3044-3057.			
 // Page 3046 equation 13.
 vctr3D ctr_diff ; 
 double temp_mat[3*3];
-temp_mat[0] =  xi_6x6[28] + xi_6x6[35]	;
-temp_mat[1] = -xi_6x6[27] 				; 
-temp_mat[2] = -xi_6x6[33]				; 
-temp_mat[3] = -xi_6x6[27]				;
-temp_mat[4] =  xi_6x6[21] + xi_6x6[35]	;
-temp_mat[5] = -xi_6x6[34]				;
-temp_mat[6] = -xi_6x6[33]				;
-temp_mat[7] = -xi_6x6[34]				;
-temp_mat[8] =  xi_6x6[28] + xi_6x6[21]	;
+temp_mat[0] =  xi_11x11[28] + xi_11x11[35]	;
+temp_mat[1] = -xi_11x11[27] 				; 
+temp_mat[2] = -xi_11x11[33]				; 
+temp_mat[3] = -xi_11x11[27]				;
+temp_mat[4] =  xi_11x11[21] + xi_11x11[35]	;
+temp_mat[5] = -xi_11x11[34]				;
+temp_mat[6] = -xi_11x11[33]				;
+temp_mat[7] = -xi_11x11[34]				;
+temp_mat[8] =  xi_11x11[28] + xi_11x11[21]	;
 
 inverse ( temp_mat , 3 )	 ; 	
 
-ctr_diff.comp[0] = temp_mat[0]*(xi_6x6[16] - xi_6x6[11]) + temp_mat[3]*(xi_6x6[5] - xi_6x6[15]) + temp_mat[6]*(xi_6x6[9] - xi_6x6[4]) ;
-ctr_diff.comp[1] = temp_mat[1]*(xi_6x6[16] - xi_6x6[11]) + temp_mat[4]*(xi_6x6[5] - xi_6x6[15]) + temp_mat[7]*(xi_6x6[9] - xi_6x6[4]) ;
-ctr_diff.comp[2] = temp_mat[2]*(xi_6x6[16] - xi_6x6[11]) + temp_mat[5]*(xi_6x6[5] - xi_6x6[15]) + temp_mat[8]*(xi_6x6[9] - xi_6x6[4]) ;
+ctr_diff.comp[0] = temp_mat[0]*(xi_11x11[16] - xi_11x11[11]) + temp_mat[3]*(xi_11x11[5] - xi_11x11[15]) + temp_mat[6]*(xi_11x11[9] - xi_11x11[4]) ;
+ctr_diff.comp[1] = temp_mat[1]*(xi_11x11[16] - xi_11x11[11]) + temp_mat[4]*(xi_11x11[5] - xi_11x11[15]) + temp_mat[7]*(xi_11x11[9] - xi_11x11[4]) ;
+ctr_diff.comp[2] = temp_mat[2]*(xi_11x11[16] - xi_11x11[11]) + temp_mat[5]*(xi_11x11[5] - xi_11x11[15]) + temp_mat[8]*(xi_11x11[9] - xi_11x11[4]) ;
 
 mtrx3D D_tt, D_tr, D_rt , D_rr, U_OD;
 
-D_tt.comp[0][0] = xi_6x6[0];
-D_tt.comp[1][0] = xi_6x6[1];
-D_tt.comp[2][0] = xi_6x6[2];
-D_tt.comp[0][1] = xi_6x6[6];
-D_tt.comp[1][1] = xi_6x6[7];
-D_tt.comp[2][1] = xi_6x6[8];
-D_tt.comp[0][2] = xi_6x6[12];
-D_tt.comp[1][2] = xi_6x6[13];
-D_tt.comp[2][2] = xi_6x6[14];
+D_tt.comp[0][0] = xi_11x11[0];
+D_tt.comp[1][0] = xi_11x11[1];
+D_tt.comp[2][0] = xi_11x11[2];
+D_tt.comp[0][1] = xi_11x11[6];
+D_tt.comp[1][1] = xi_11x11[7];
+D_tt.comp[2][1] = xi_11x11[8];
+D_tt.comp[0][2] = xi_11x11[12];
+D_tt.comp[1][2] = xi_11x11[13];
+D_tt.comp[2][2] = xi_11x11[14];
 
-D_tr.comp[0][0] = xi_6x6[3];
-D_tr.comp[1][0] = xi_6x6[4];
-D_tr.comp[2][0] = xi_6x6[5];
-D_tr.comp[0][1] = xi_6x6[9];
-D_tr.comp[1][1] = xi_6x6[10];
-D_tr.comp[2][1] = xi_6x6[11];
-D_tr.comp[0][2] = xi_6x6[15];
-D_tr.comp[1][2] = xi_6x6[16];
-D_tr.comp[2][2] = xi_6x6[17];
+D_tr.comp[0][0] = xi_11x11[3];
+D_tr.comp[1][0] = xi_11x11[4];
+D_tr.comp[2][0] = xi_11x11[5];
+D_tr.comp[0][1] = xi_11x11[9];
+D_tr.comp[1][1] = xi_11x11[10];
+D_tr.comp[2][1] = xi_11x11[11];
+D_tr.comp[0][2] = xi_11x11[15];
+D_tr.comp[1][2] = xi_11x11[16];
+D_tr.comp[2][2] = xi_11x11[17];
 
-D_rt.comp[0][0] = xi_6x6[18];
-D_rt.comp[1][0] = xi_6x6[19];
-D_rt.comp[2][0] = xi_6x6[20];
-D_rt.comp[0][1] = xi_6x6[24];
-D_rt.comp[1][1] = xi_6x6[25];
-D_rt.comp[2][1] = xi_6x6[26];
-D_rt.comp[0][2] = xi_6x6[30];
-D_rt.comp[1][2] = xi_6x6[31];
-D_rt.comp[2][2] = xi_6x6[32];
+D_rt.comp[0][0] = xi_11x11[18];
+D_rt.comp[1][0] = xi_11x11[19];
+D_rt.comp[2][0] = xi_11x11[20];
+D_rt.comp[0][1] = xi_11x11[24];
+D_rt.comp[1][1] = xi_11x11[25];
+D_rt.comp[2][1] = xi_11x11[26];
+D_rt.comp[0][2] = xi_11x11[30];
+D_rt.comp[1][2] = xi_11x11[31];
+D_rt.comp[2][2] = xi_11x11[32];
 
-D_rr.comp[0][0] = xi_6x6[21];
-D_rr.comp[1][0] = xi_6x6[22];
-D_rr.comp[2][0] = xi_6x6[23];
-D_rr.comp[0][1] = xi_6x6[27];
-D_rr.comp[1][1] = xi_6x6[28];
-D_rr.comp[2][1] = xi_6x6[29];
-D_rr.comp[0][2] = xi_6x6[33];
-D_rr.comp[1][2] = xi_6x6[34];
-D_rr.comp[2][2] = xi_6x6[35];
+D_rr.comp[0][0] = xi_11x11[21];
+D_rr.comp[1][0] = xi_11x11[22];
+D_rr.comp[2][0] = xi_11x11[23];
+D_rr.comp[0][1] = xi_11x11[27];
+D_rr.comp[1][1] = xi_11x11[28];
+D_rr.comp[2][1] = xi_11x11[29];
+D_rr.comp[0][2] = xi_11x11[33];
+D_rr.comp[1][2] = xi_11x11[34];
+D_rr.comp[2][2] = xi_11x11[35];
 
 U_OD.comp[0][0] =  0.0;
 U_OD.comp[1][0] =  ctr_diff.comp[2];
@@ -484,48 +507,48 @@ mtrx3D D_tt_CoD = D_tt -  U_OD*D_rr*U_OD + D_rt*U_OD - U_OD*D_tr ;
 mtrx3D D_tr_CoD = D_tr +  D_rr*U_OD ;  // based on equations 42 from Wouter's notes "clusterdyn"
 mtrx3D D_rt_CoD = D_rt -  U_OD*D_rr ;  // based on equations 43 from Wouter's notes "clusterdyn"
 
-xi_6x6[0]  = D_tt_CoD.comp[0][0];
-xi_6x6[1]  = D_tt_CoD.comp[1][0];
-xi_6x6[2]  = D_tt_CoD.comp[2][0];
-xi_6x6[6]  = D_tt_CoD.comp[0][1];
-xi_6x6[7]  = D_tt_CoD.comp[1][1];
-xi_6x6[8]  = D_tt_CoD.comp[2][1];
-xi_6x6[12] = D_tt_CoD.comp[0][2];
-xi_6x6[13] = D_tt_CoD.comp[1][2];
-xi_6x6[14] = D_tt_CoD.comp[2][2];
+xi_11x11[0]  = D_tt_CoD.comp[0][0];
+xi_11x11[1]  = D_tt_CoD.comp[1][0];
+xi_11x11[2]  = D_tt_CoD.comp[2][0];
+xi_11x11[6]  = D_tt_CoD.comp[0][1];
+xi_11x11[7]  = D_tt_CoD.comp[1][1];
+xi_11x11[8]  = D_tt_CoD.comp[2][1];
+xi_11x11[12] = D_tt_CoD.comp[0][2];
+xi_11x11[13] = D_tt_CoD.comp[1][2];
+xi_11x11[14] = D_tt_CoD.comp[2][2];
 
-xi_6x6[3]  = D_tr_CoD.comp[0][0];
-xi_6x6[4]  = D_tr_CoD.comp[1][0];
-xi_6x6[5]  = D_tr_CoD.comp[2][0];
-xi_6x6[9]  = D_tr_CoD.comp[0][1];
-xi_6x6[10] = D_tr_CoD.comp[1][1];
-xi_6x6[11] = D_tr_CoD.comp[2][1];
-xi_6x6[15] = D_tr_CoD.comp[0][2];
-xi_6x6[16] = D_tr_CoD.comp[1][2];
-xi_6x6[17] = D_tr_CoD.comp[2][2];
+xi_11x11[3]  = D_tr_CoD.comp[0][0];
+xi_11x11[4]  = D_tr_CoD.comp[1][0];
+xi_11x11[5]  = D_tr_CoD.comp[2][0];
+xi_11x11[9]  = D_tr_CoD.comp[0][1];
+xi_11x11[10] = D_tr_CoD.comp[1][1];
+xi_11x11[11] = D_tr_CoD.comp[2][1];
+xi_11x11[15] = D_tr_CoD.comp[0][2];
+xi_11x11[16] = D_tr_CoD.comp[1][2];
+xi_11x11[17] = D_tr_CoD.comp[2][2];
 
-xi_6x6[18]  = D_rt_CoD.comp[0][0];
-xi_6x6[19]  = D_rt_CoD.comp[1][0];
-xi_6x6[20]  = D_rt_CoD.comp[2][0];
-xi_6x6[24]  = D_rt_CoD.comp[0][1];
-xi_6x6[25]  = D_rt_CoD.comp[1][1];
-xi_6x6[26]  = D_rt_CoD.comp[2][1];
-xi_6x6[30]  = D_rt_CoD.comp[0][2];
-xi_6x6[31]  = D_rt_CoD.comp[1][2];
-xi_6x6[32]  = D_rt_CoD.comp[2][2];
+xi_11x11[18]  = D_rt_CoD.comp[0][0];
+xi_11x11[19]  = D_rt_CoD.comp[1][0];
+xi_11x11[20]  = D_rt_CoD.comp[2][0];
+xi_11x11[24]  = D_rt_CoD.comp[0][1];
+xi_11x11[25]  = D_rt_CoD.comp[1][1];
+xi_11x11[26]  = D_rt_CoD.comp[2][1];
+xi_11x11[30]  = D_rt_CoD.comp[0][2];
+xi_11x11[31]  = D_rt_CoD.comp[1][2];
+xi_11x11[32]  = D_rt_CoD.comp[2][2];
 
 	for (int i=0; i<NrParticles; i++)
 		{
 			outFile1<<"particle position"<<'\t'<<particle[i].pos.comp[0]<<'\t'<<particle[i].pos.comp[1]<<'\t'<<particle[i].pos.comp[2]<<'\t'<<particle[i].radius<<std::endl ;
 		} 	
 		outFile1<<std::endl ;
-		outFile1<<xi_6x6[0]<<'\t'<<xi_6x6[6]<<'\t'<<xi_6x6[12]<<'\t'<<xi_6x6[18]<<'\t'<<xi_6x6[24]<<'\t'<<xi_6x6[30]<<std::endl ;
-		outFile1<<xi_6x6[1]<<'\t'<<xi_6x6[7]<<'\t'<<xi_6x6[13]<<'\t'<<xi_6x6[19]<<'\t'<<xi_6x6[25]<<'\t'<<xi_6x6[31]<<std::endl ;
-		outFile1<<xi_6x6[2]<<'\t'<<xi_6x6[8]<<'\t'<<xi_6x6[14]<<'\t'<<xi_6x6[20]<<'\t'<<xi_6x6[26]<<'\t'<<xi_6x6[32]<<std::endl ;
+		outFile1<<xi_11x11[0]<<'\t'<<xi_11x11[6]<<'\t'<<xi_11x11[12]<<'\t'<<xi_11x11[18]<<'\t'<<xi_11x11[24]<<'\t'<<xi_11x11[30]<<std::endl ;
+		outFile1<<xi_11x11[1]<<'\t'<<xi_11x11[7]<<'\t'<<xi_11x11[13]<<'\t'<<xi_11x11[19]<<'\t'<<xi_11x11[25]<<'\t'<<xi_11x11[31]<<std::endl ;
+		outFile1<<xi_11x11[2]<<'\t'<<xi_11x11[8]<<'\t'<<xi_11x11[14]<<'\t'<<xi_11x11[20]<<'\t'<<xi_11x11[26]<<'\t'<<xi_11x11[32]<<std::endl ;
 		outFile1<<std::endl ;
-		outFile1<<xi_6x6[3]<<'\t'<<xi_6x6[9]<<'\t'<<xi_6x6[15]<<'\t'<<xi_6x6[21]<<'\t'<<xi_6x6[27]<<'\t'<<xi_6x6[33]<<std::endl ;
-		outFile1<<xi_6x6[4]<<'\t'<<xi_6x6[10]<<'\t'<<xi_6x6[16]<<'\t'<<xi_6x6[22]<<'\t'<<xi_6x6[28]<<'\t'<<xi_6x6[34]<<std::endl ;
-		outFile1<<xi_6x6[5]<<'\t'<<xi_6x6[11]<<'\t'<<xi_6x6[17]<<'\t'<<xi_6x6[23]<<'\t'<<xi_6x6[29]<<'\t'<<xi_6x6[35]<<std::endl ;
+		outFile1<<xi_11x11[3]<<'\t'<<xi_11x11[9]<<'\t'<<xi_11x11[15]<<'\t'<<xi_11x11[21]<<'\t'<<xi_11x11[27]<<'\t'<<xi_11x11[33]<<std::endl ;
+		outFile1<<xi_11x11[4]<<'\t'<<xi_11x11[10]<<'\t'<<xi_11x11[16]<<'\t'<<xi_11x11[22]<<'\t'<<xi_11x11[28]<<'\t'<<xi_11x11[34]<<std::endl ;
+		outFile1<<xi_11x11[5]<<'\t'<<xi_11x11[11]<<'\t'<<xi_11x11[17]<<'\t'<<xi_11x11[23]<<'\t'<<xi_11x11[29]<<'\t'<<xi_11x11[35]<<std::endl ;
 		
 		outFile1<<ctr_diff.comp[0]<<'\t'<<ctr_diff.comp[1]<<'\t'<<ctr_diff.comp[2]<<std::endl ;
 		

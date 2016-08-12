@@ -84,8 +84,8 @@ vector<SubData>  particle(NrParticles);
 
 // variables for mobility tensor calculation
 double eta_0=0.1;
-vctr3D Rij , rij_unit ;
-double Rij2, Rij2_inv, temp, temp1, temp2, temp3, tau ;
+vctr3D e_ab , e_ab_unit ;
+double e_ab2, e_ab2_inv, temp, temp1, temp2, temp3, tau ;
 //
 
 if(ifrestart)	{
@@ -204,11 +204,27 @@ while (( next_file = readdir(theFolder)) )
 	mtrx53D Mobility_Tnsr_dr;
 	mtrx55D Mobility_Tnsr_dd;
 	
-// three index mobility matrices	
-	double mu_td_abc[3][3][3];
-	double mu_rd_abc[3][3][3];
-	double mu_dt_abc[3][3][3];
-	double mu_dr_abc[3][3][3];
+// Kronecker delta
+
+	double kron_del[3][3] = {	
+								{1.0,0.0,0.0},
+								{0.0,1.0,0.0},
+								{0.0,0.0,1.0}
+							};
+							
+
+// Levi-Civita 
+
+	double Levi_Civi[3][3][3] = {
+							{{0.0,0.0,0.0},{0.0,0.0,1.0},{0.0,-1.0,0.0}},
+							{{0.0,0.0,-1.0},{0.0,0.0,0.0},{1.0,0.0,0.0}},
+							{{0.0,1.0,0.0},{-1.0,0.0,0.0},{0.0,0.0,0.0}}
+							};
+	
+// three and four index mobility matrices	
+	double g_ijk[3][3][3];
+	double h_ijk[3][3][3];
+	double m_ijkl[3][3][3][3];
 	
 // the five base matrices for strain tensor // option 5 :  equation 419 wouter's tex version clusterdyn_110816_1556
 
@@ -231,26 +247,78 @@ while (( next_file = readdir(theFolder)) )
 		
 std::ofstream outFile1(dataFileName+"/data.dat");
 		
-for (int i=0; i<NrParticles; i++)
+for (int a=0; a<NrParticles; a++)
 	{
-		for (int j=i; j<NrParticles; j++)
+		for (int b=a; b<NrParticles; b++)
 			{
-				cout<<(i==j)<<endl;
-				Rij=particle[i].pos-particle[j].pos;
-			//	rij_unit = 	Rij*(1.0/sqrt(Rij2)); 
-				mtrx3D Pij(Rij, Rij) ;
-				Rij2=Rij.norm2();
-				vctr3D col1(0.0, -Rij.comp[2], Rij.comp[1]);
-				vctr3D col2(Rij.comp[2],0.0,-Rij.comp[0]);
-				vctr3D col3(-Rij.comp[1],Rij.comp[0],0.0);
-				mtrx3D epsilon_rij(col1 , col2 , col3);
-				Rij2_inv=1.0/Rij2;
+				cout<<(a==b)<<endl;
+				e_ab=particle[a].pos-particle[b].pos;
+				mtrx3D Pab(e_ab, e_ab) ;
+				e_ab2=e_ab.norm2();
+				vctr3D col1(0.0, -e_ab.comp[2], e_ab.comp[1]);
+				vctr3D col2(e_ab.comp[2],0.0,-e_ab.comp[0]);
+				vctr3D col3(-e_ab.comp[1],e_ab.comp[0],0.0);
+				mtrx3D epsilon_e_ab(col1 , col2 , col3);
+				e_ab2_inv=1.0/e_ab2;
+				
+				e_ab_unit = e_ab*sqrt(e_ab2_inv); 
+				if(a==b) {	e_ab_unit = e_ab*0.0; }	
 				temp1=1.0/(8.0*M_PI*eta_0);
-				tau = 1.0/(6.0*M_PI*eta_0*particle[i].radius);
-				temp=temp1/(sqrt(Rij2));
-				temp2=temp1/(particle[i].radius*particle[i].radius*particle[i].radius);
-				temp3=temp/(2.0*(Rij2));
-				if(i==j) {
+				tau = 1.0/(6.0*M_PI*eta_0*particle[a].radius);
+				temp=temp1/(sqrt(e_ab2));
+				temp2=temp1/(particle[a].radius*particle[a].radius*particle[a].radius);
+				temp3=temp/(2.0*(e_ab2));
+			    double r 	= sqrt(e_ab2);
+			    double r_1 	= 1.0/(r);
+			    double r_2 	= 1.0/(r*r);			    
+			    double r_3 	= 1.0/(r*r*r);
+			    cout << r << '\t'<<r_1<< '\t'<<r_2 << '\t' << r_3 << 'a'<< a<< 'b'<< b<< endl;
+				cout << e_ab_unit.comp[0] << "x-comp"<<endl; 
+
+				// mobility scalar values - as defined in Page 46, Appendix A - Durlofsky, Louis, John F. Brady, and Georges Bossis. 
+				// "Dynamic simulation of hydrodynamically interacting particles." Journal of fluid mechanics 180 (1987): 21-49.
+
+				double x_a[2][2] = {{	1.0		,	3.0*r_1/2.0		-	1.0*r_3*particle[a].radius*particle[a].radius		},{	3.0*r_1/2.0		-	1.0*r_3*particle[a].radius*particle[a].radius		,	1.0		} }; 
+				double y_a[2][2] = {{	1.0		,	(3.0*r_1/4.0)		+	(1.0*r_3*particle[a].radius*particle[a].radius/2.0)	},{	(3.0*r_1/4.0)		+	(1.0*r_3*particle[a].radius*particle[a].radius/2.0)	,	1.0		} }; 
+				double y_b[2][2] = {{	0.0		,  -3.0*r_2/4.0						},{	3.0*r_2/4.0						,	0.0		} }; 
+				double x_c[2][2] = {{	3.0/4.0	,  	3.0*r_3/4.0						},{	3.0*r_3/4.0						,  	3.0/4.0	} }; 
+				double y_c[2][2] = {{	3.0/4.0	,  -3.0*r_3/8.0						},{-3.0*r_3/8.0						,  	3.0/4.0	} }; 
+								cout << x_a[0][1] << "x-comp"<<endl; 
+
+				if(a==b) {
+				double	a_norm = 1.0/(6.0*M_PI*eta_0*particle[a].radius);						// mobility matrix a non-dimensionalized by 6*pi*mu*r
+				double	b_norm = 1.0/(6.0*M_PI*eta_0*particle[a].radius*particle[a].radius);						// mobility matrix a non-dimensionalized by 6*pi*mu*r2
+				double	c_norm = 1.0/(6.0*M_PI*eta_0*particle[a].radius*particle[a].radius*particle[a].radius);						// mobility matrix a non-dimensionalized by 6*pi*mu*r3
+				Mobility_Tnsr_tr	= 		null33D ;
+					
+				for (int i=0; i<3; i++)
+					{
+					for (int j=0; j<3; j++)
+						{
+							Mobility_Tnsr_tt.comp[i][j]		=	a_norm*(x_a[1][1]*e_ab_unit.comp[i]*e_ab_unit.comp[j]	+ 	y_a[1][1]*(kron_del[i][j]	- e_ab_unit.comp[i]*e_ab_unit.comp[j]	)	);
+
+							double ep_ijk_e_k = 0.0;
+							
+							for (int k =0 ; k < 3; k++ ) {ep_ijk_e_k+=Levi_Civi[i][j][k]*e_ab_unit.comp[k];}  
+							
+							Mobility_Tnsr_rt.comp[i][j]		=	b_norm*(													y_b[1][1]*ep_ijk_e_k													);
+						
+							Mobility_Tnsr_rr.comp[i][j]		=	c_norm*(x_c[1][1]*e_ab_unit.comp[i]*e_ab_unit.comp[j]	+ 	y_c[1][1]*(kron_del[i][j]	- e_ab_unit.comp[i]*e_ab_unit.comp[j]	)	);
+
+		//						cout << "expresssion"	<< endl;				
+		//						cout << Mobility_Tnsr_rr.comp[i][j] << endl;		
+						}
+					}
+	
+	/*				for (int i=0; i<3; i++)
+					{
+					for (int j=0; j<3; j++)
+						{									
+							cout << "matrix"	<< endl;				
+							cout << Mobility_Tnsr_rr.comp[i][j] << endl;
+						}
+					}		*/												
+			
 				Mobility_Tnsr_tt	=	 	Unit_diag * tau ;
 											
 				Mobility_Tnsr_rr	=		Unit_diag * temp2 ;
@@ -258,19 +326,70 @@ for (int i=0; i<NrParticles; i++)
 				Mobility_Tnsr_tr	= 		null33D ;
 				Mobility_Tnsr_td	= 		null35D ;
 				Mobility_Tnsr_dt	= 		null53D ;
+							
+								
+				for (int i=0; i<3; i++)
+					{
+					for (int j=0; j<3; j++)
+						{
+						for (int k=0; k<3; k++)
+							{
+								
+							}	// k
+						}	//j
+					}	//i				
 
 			 } else {
-				Mobility_Tnsr_tt	=	(	Unit_diag
-											+	(Pij)*Rij2_inv
-											+	(Unit_diag*(1.0/3.0)-(Pij)*Rij2_inv)*(particle[i].radius*particle[i].radius+particle[j].radius*particle[j].radius)*Rij2_inv
+				double	a_norm = 1.0/(6.0*M_PI*eta_0);						// mobility matrix a non-dimensionalized by 6*pi*mu*r
+				double	b_norm = 1.0/(6.0*M_PI*eta_0);						// mobility matrix a non-dimensionalized by 6*pi*mu*r2
+				double	c_norm = 1.0/(6.0*M_PI*eta_0);						// mobility matrix a non-dimensionalized by 6*pi*mu*r3		
+				
+				for (int i=0; i<3; i++)
+					{
+					for (int j=0; j<3; j++)
+						{
+							Mobility_Tnsr_tt.comp[i][j]		=	a_norm*(x_a[1][0]*e_ab_unit.comp[i]*e_ab_unit.comp[j]	+ 	y_a[1][0]*(kron_del[i][j]	- e_ab_unit.comp[i]*e_ab_unit.comp[j]	)	);
+									
+
+
+							double ep_ijk_e_k = 0.0;
+							
+							for (int k =0 ; k < 3; k++ ) {ep_ijk_e_k+=Levi_Civi[i][j][k]*e_ab_unit.comp[k];}  
+							
+							Mobility_Tnsr_rt.comp[i][j]		=	b_norm*(													y_b[1][0]*ep_ijk_e_k													);
+							
+							Mobility_Tnsr_tr	= 	    Mobility_Tnsr_rt*(1.0);		
+							
+							Mobility_Tnsr_rr.comp[i][j]		=	c_norm*(x_c[0][1]*e_ab_unit.comp[i]*e_ab_unit.comp[j]	+ 	y_c[0][1]*(kron_del[i][j]	- e_ab_unit.comp[i]*e_ab_unit.comp[j]	)	);
+
+
+								cout << "expresssion"	<< endl;				
+								cout << Mobility_Tnsr_tt.comp[i][j] << endl;	
+
+						}
+					}
+									
+	/*			Mobility_Tnsr_tt	=	(	Unit_diag
+											+	(Pab)*e_ab2_inv
+											+	(Unit_diag*(1.0/3.0)-(Pab)*e_ab2_inv)*(particle[a].radius*particle[a].radius+particle[b].radius*particle[b].radius)*e_ab2_inv
 											)	*	temp;
+
+									
+				Mobility_Tnsr_rr	=		(Unit_diag*(-1.0) + (Pab)*e_ab2_inv*3.0)*temp3 ;
 				
-				Mobility_Tnsr_rr	=		(Unit_diag*(-1.0) + (Pij)*Rij2_inv*3.0)*temp3 ;
+				Mobility_Tnsr_rt	=	  	epsilon_e_ab*(2.0)*temp3;
+				Mobility_Tnsr_tr	= 	    Mobility_Tnsr_tr*(1.0);	
 				
-				Mobility_Tnsr_rt	=	  	epsilon_rij*(2.0)*temp3;
-				Mobility_Tnsr_tr	= 	    Mobility_Tnsr_rt*(1.0);												
-			 } 
-			
+				
+					for (int i=0; i<3; i++)
+					{
+					for (int j=0; j<3; j++)
+						{									
+							cout << "matrix"	<< endl;				
+							cout << Mobility_Tnsr_tt.comp[i][j] << endl;
+						}
+					}		
+	*/		}
 			for (int l=0; l<3; l++)
 				{
 					for (int k=0; k<3; k++)
@@ -280,14 +399,14 @@ for (int i=0; i<NrParticles; i++)
 							mu_6N[l+3*k+9*j+i*9*NrParticles+18*NrParticles*NrParticles] 	=	 Mobility_Tnsr_rt.comp[k][l];
 							mu_6N[l+3*k+9*j+i*9*NrParticles+27*NrParticles*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];		*/					
 							// column major format
-							zeta_11N[k+6*NrParticles*l+3*i+18*NrParticles*j] 					=	 Mobility_Tnsr_tt.comp[k][l];
-							zeta_11N[k+6*NrParticles*l+3*i+18*NrParticles*j+18*NrParticles*NrParticles] 	=	 Mobility_Tnsr_tr.comp[k][l];
-							zeta_11N[k+6*NrParticles*l+3*i+18*NrParticles*j+3*NrParticles] 	=	 Mobility_Tnsr_rt.comp[k][l];
-							zeta_11N[k+6*NrParticles*l+3*i+18*NrParticles*j+18*NrParticles*NrParticles+3*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];							
-							zeta_11N[k+6*NrParticles*l+3*j+18*NrParticles*i] 					=	 Mobility_Tnsr_tt.comp[k][l];
-							zeta_11N[k+6*NrParticles*l+3*j+18*NrParticles*i+18*NrParticles*NrParticles] 	=	 -Mobility_Tnsr_rt.comp[k][l];
-							zeta_11N[k+6*NrParticles*l+3*j+18*NrParticles*i+3*NrParticles] 	=	 -Mobility_Tnsr_rt.comp[k][l];
-							zeta_11N[k+6*NrParticles*l+3*j+18*NrParticles*i+18*NrParticles*NrParticles+3*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];
+							zeta_11N[k+6*NrParticles*l+3*a+18*NrParticles*b] 					=	 Mobility_Tnsr_tt.comp[k][l];
+							zeta_11N[k+6*NrParticles*l+3*a+18*NrParticles*b+18*NrParticles*NrParticles] 	=	 Mobility_Tnsr_tr.comp[k][l];
+							zeta_11N[k+6*NrParticles*l+3*a+18*NrParticles*b+3*NrParticles] 	=	 Mobility_Tnsr_rt.comp[k][l];
+							zeta_11N[k+6*NrParticles*l+3*a+18*NrParticles*b+18*NrParticles*NrParticles+3*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];							
+							zeta_11N[k+6*NrParticles*l+3*b+18*NrParticles*a] 					=	 Mobility_Tnsr_tt.comp[k][l];
+							zeta_11N[k+6*NrParticles*l+3*b+18*NrParticles*a+18*NrParticles*NrParticles] 	=	 -Mobility_Tnsr_rt.comp[k][l];
+							zeta_11N[k+6*NrParticles*l+3*b+18*NrParticles*a+3*NrParticles] 	=	 -Mobility_Tnsr_rt.comp[k][l];
+							zeta_11N[k+6*NrParticles*l+3*b+18*NrParticles*a+18*NrParticles*NrParticles+3*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];
 						}
 				}	
 				

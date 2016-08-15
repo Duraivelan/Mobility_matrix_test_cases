@@ -246,6 +246,10 @@ while (( next_file = readdir(theFolder)) )
 		}        
 		
 std::ofstream outFile1(dataFileName+"/data.dat");
+
+// important all lengths have been normalized by particle radius as metioned in Page 46, Appendix A - Durlofsky, Louis, John F. Brady, and Georges Bossis. 
+				// "Dynamic simulation of hydrodynamically interacting particles." Journal of fluid mechanics 180 (1987): 21-49.
+				// for ease of programming. 
 		
 for (int a=0; a<NrParticles; a++)
 	{
@@ -268,27 +272,28 @@ for (int a=0; a<NrParticles; a++)
 				temp=temp1/(sqrt(e_ab2));
 				temp2=temp1/(particle[a].radius*particle[a].radius*particle[a].radius);
 				temp3=temp/(2.0*(e_ab2));
-			    double r 	= sqrt(e_ab2);
+			    double r 	= sqrt(e_ab2)/particle[a].radius;			// distance between particle vector 'r' magnitude |r| normalized by particle radius 'a' ;
 			    double r_1 	= 1.0/(r);
 			    double r_2 	= 1.0/(r*r);			    
 			    double r_3 	= 1.0/(r*r*r);
-			    cout << r << '\t'<<r_1<< '\t'<<r_2 << '\t' << r_3 << 'a'<< a<< 'b'<< b<< endl;
-				cout << e_ab_unit.comp[0] << "x-comp"<<endl; 
+			    // cout << r << '\t'<<r_1<< '\t'<<r_2 << '\t' << r_3 << 'a'<< a<< 'b'<< b<< endl;
+				// cout << e_ab_unit.comp[0] << "x-comp"<<endl; 
 
 				// mobility scalar values - as defined in Page 46, Appendix A - Durlofsky, Louis, John F. Brady, and Georges Bossis. 
 				// "Dynamic simulation of hydrodynamically interacting particles." Journal of fluid mechanics 180 (1987): 21-49.
 
-				double x_a[2][2] = {{	1.0		,	3.0*r_1/2.0		-	1.0*r_3*particle[a].radius*particle[a].radius		},{	3.0*r_1/2.0		-	1.0*r_3*particle[a].radius*particle[a].radius		,	1.0		} }; 
-				double y_a[2][2] = {{	1.0		,	(3.0*r_1/4.0)		+	(1.0*r_3*particle[a].radius*particle[a].radius/2.0)	},{	(3.0*r_1/4.0)		+	(1.0*r_3*particle[a].radius*particle[a].radius/2.0)	,	1.0		} }; 
+				double x_a[2][2] = {{	1.0		,	3.0*r_1/2.0		-	1.0*r_3		},{	3.0*r_1/2.0		-	1.0*r_3		,	1.0		} }; 
+				double y_a[2][2] = {{	1.0		,	(3.0*r_1/4.0)		+	(1.0*r_3/2.0)	},{	(3.0*r_1/4.0)		+	(1.0*r_3/2.0)	,	1.0		} }; 
 				double y_b[2][2] = {{	0.0		,  -3.0*r_2/4.0						},{	3.0*r_2/4.0						,	0.0		} }; 
 				double x_c[2][2] = {{	3.0/4.0	,  	3.0*r_3/4.0						},{	3.0*r_3/4.0						,  	3.0/4.0	} }; 
 				double y_c[2][2] = {{	3.0/4.0	,  -3.0*r_3/8.0						},{-3.0*r_3/8.0						,  	3.0/4.0	} }; 
-								cout << x_a[0][1] << "x-comp"<<endl; 
-
-				if(a==b) {
+				//				cout << x_a[0][1] << "x-comp"<<endl; 
 				double	a_norm = 1.0/(6.0*M_PI*eta_0*particle[a].radius);						// mobility matrix a non-dimensionalized by 6*pi*mu*r
 				double	b_norm = 1.0/(6.0*M_PI*eta_0*particle[a].radius*particle[a].radius);						// mobility matrix a non-dimensionalized by 6*pi*mu*r2
 				double	c_norm = 1.0/(6.0*M_PI*eta_0*particle[a].radius*particle[a].radius*particle[a].radius);						// mobility matrix a non-dimensionalized by 6*pi*mu*r3
+				
+				if(a==b) {
+
 				Mobility_Tnsr_tr	= 		null33D ;
 					
 				for (int i=0; i<3; i++)
@@ -306,19 +311,19 @@ for (int a=0; a<NrParticles; a++)
 							Mobility_Tnsr_rr.comp[i][j]		=	c_norm*(x_c[1][1]*e_ab_unit.comp[i]*e_ab_unit.comp[j]	+ 	y_c[1][1]*(kron_del[i][j]	- e_ab_unit.comp[i]*e_ab_unit.comp[j]	)	);
 
 		//						cout << "expresssion"	<< endl;				
-		//						cout << Mobility_Tnsr_rr.comp[i][j] << endl;		
+		//						cout << Mobility_Tnsr_rt.comp[i][j] << endl;		
 						}
 					}
-	
-	/*				for (int i=0; i<3; i++)
+		/*
+					for (int i=0; i<3; i++)
 					{
 					for (int j=0; j<3; j++)
 						{									
 							cout << "matrix"	<< endl;				
-							cout << Mobility_Tnsr_rr.comp[i][j] << endl;
+							cout << Mobility_Tnsr_rt.comp[i][j] << endl;
 						}
-					}		*/												
-			
+					}														
+		*/	
 				Mobility_Tnsr_tt	=	 	Unit_diag * tau ;
 											
 				Mobility_Tnsr_rr	=		Unit_diag * temp2 ;
@@ -340,10 +345,7 @@ for (int a=0; a<NrParticles; a++)
 					}	//i				
 
 			 } else {
-				double	a_norm = 1.0/(6.0*M_PI*eta_0);						// mobility matrix a non-dimensionalized by 6*pi*mu*r
-				double	b_norm = 1.0/(6.0*M_PI*eta_0);						// mobility matrix a non-dimensionalized by 6*pi*mu*r2
-				double	c_norm = 1.0/(6.0*M_PI*eta_0);						// mobility matrix a non-dimensionalized by 6*pi*mu*r3		
-				
+			
 				for (int i=0; i<3; i++)
 					{
 					for (int j=0; j<3; j++)
@@ -363,8 +365,8 @@ for (int a=0; a<NrParticles; a++)
 							Mobility_Tnsr_rr.comp[i][j]		=	c_norm*(x_c[0][1]*e_ab_unit.comp[i]*e_ab_unit.comp[j]	+ 	y_c[0][1]*(kron_del[i][j]	- e_ab_unit.comp[i]*e_ab_unit.comp[j]	)	);
 
 
-								cout << "expresssion"	<< endl;				
-								cout << Mobility_Tnsr_tt.comp[i][j] << endl;	
+		//						cout << "expresssion"	<< endl;				
+		//						cout << Mobility_Tnsr_tr.comp[i][j] << endl;	
 
 						}
 					}
@@ -386,7 +388,7 @@ for (int a=0; a<NrParticles; a++)
 					for (int j=0; j<3; j++)
 						{									
 							cout << "matrix"	<< endl;				
-							cout << Mobility_Tnsr_tt.comp[i][j] << endl;
+							cout << Mobility_Tnsr_tr.comp[i][j] << endl;
 						}
 					}		
 	*/		}

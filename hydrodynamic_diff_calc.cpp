@@ -276,21 +276,35 @@ for (int a=0; a<NrParticles; a++)
 			    double r_1 	= 1.0/(r);
 			    double r_2 	= 1.0/(r*r);			    
 			    double r_3 	= 1.0/(r*r*r);
+			    double r_4 	= 1.0/(r*r*r*r);
+			    double r_5 	= 1.0/(r*r*r*r*r);
 			    // cout << r << '\t'<<r_1<< '\t'<<r_2 << '\t' << r_3 << 'a'<< a<< 'b'<< b<< endl;
 				// cout << e_ab_unit.comp[0] << "x-comp"<<endl; 
 
 				// mobility scalar values - as defined in Page 46, Appendix A - Durlofsky, Louis, John F. Brady, and Georges Bossis. 
 				// "Dynamic simulation of hydrodynamically interacting particles." Journal of fluid mechanics 180 (1987): 21-49.
 
-				double x_a[2][2] = {{	1.0		,	3.0*r_1/2.0		-	1.0*r_3		},{	3.0*r_1/2.0		-	1.0*r_3		,	1.0		} }; 
-				double y_a[2][2] = {{	1.0		,	(3.0*r_1/4.0)		+	(1.0*r_3/2.0)	},{	(3.0*r_1/4.0)		+	(1.0*r_3/2.0)	,	1.0		} }; 
-				double y_b[2][2] = {{	0.0		,  -3.0*r_2/4.0						},{	3.0*r_2/4.0						,	0.0		} }; 
-				double x_c[2][2] = {{	3.0/4.0	,  	3.0*r_3/4.0						},{	3.0*r_3/4.0						,  	3.0/4.0	} }; 
-				double y_c[2][2] = {{	3.0/4.0	,  -3.0*r_3/8.0						},{-3.0*r_3/8.0						,  	3.0/4.0	} }; 
+				double x_a[2][2] = {{	1.0		,	3.0*r_1/2.0		-	1.0*r_3			},{	3.0*r_1/2.0		-	1.0*r_3			,	1.0		} }; 
+				double y_a[2][2] = {{	1.0		,	(3.0*r_1/4.0)	+	(1.0*r_3/2.0)	},{	3.0*r_1/4.0		+	1.0*r_3/2.0		,	1.0		} }; 
+				double y_b[2][2] = {{	0.0		,  -3.0*r_2/4.0							},{	3.0*r_2/4.0							,	0.0		} }; 
+				double x_c[2][2] = {{	3.0/4.0	,  	3.0*r_3/4.0							},{	3.0*r_3/4.0							,  	3.0/4.0	} }; 
+				double y_c[2][2] = {{	3.0/4.0	,  -3.0*r_3/8.0							},{-3.0*r_3/8.0							,  	3.0/4.0	} }; 
+
+				double x_g[2][2] = {{	0.0		,	9.0*r_2/4.0		-	18.0*r_4/5.0	},{-9.0*r_2/4.0		+	18.0*r_4/5.0	,	0.0		} };
+				double y_g[2][2] = {{	0.0		,	6.0*r_4/5.0							},{-6.0*r_4/5.0							,	0.0		} };
+				double y_h[2][2] = {{	0.0		,  -9.0*r_3/8.0							},{-9.0*r_3/8.0							,	0.0		} };
+				double x_m[2][2] = {{	9.0/10.0,  -9.0*r_3/2.0		+ 	54.0*r_5/5.0	},{-9.0*r_3/2.0		+ 	54.0*r_5/5.0	,	9.0/10.0} };
+				double y_m[2][2] = {{	9.0/10.0,   9.0*r_3/4.0		- 	36.0*r_5/5.0	},{ 9.0*r_3/4.0		- 	36.0*r_5/5.0	,	9.0/10.0} };
+				double z_m[2][2] = {{	9.0/10.0,  					 	 9.0*r_5/5.0	},{ 				 	 9.0*r_5/5.0	,	9.0/10.0} };
+
 				//				cout << x_a[0][1] << "x-comp"<<endl; 
+				
 				double	a_norm = 1.0/(6.0*M_PI*eta_0*particle[a].radius);						// mobility matrix a non-dimensionalized by 6*pi*mu*r
 				double	b_norm = 1.0/(6.0*M_PI*eta_0*particle[a].radius*particle[a].radius);						// mobility matrix a non-dimensionalized by 6*pi*mu*r2
 				double	c_norm = 1.0/(6.0*M_PI*eta_0*particle[a].radius*particle[a].radius*particle[a].radius);						// mobility matrix a non-dimensionalized by 6*pi*mu*r3
+				double	g_norm = 20.0/18.0;											//		assuming correction factor of 6*pi*mu*r3/(20*pi*mu*r3/3)	
+				double	h_norm = 20.0/18.0;											//		assuming correction factor of 6*pi*mu*r3/(20*pi*mu*r3/3)	
+				double	m_norm = 1.0/(6.0*M_PI*eta_0*particle[a].radius*particle[a].radius*particle[a].radius);						//		assuming correction factor of 6*pi*mu*r3	
 				
 				if(a==b) {
 
@@ -300,11 +314,43 @@ for (int a=0; a<NrParticles; a++)
 					{
 					for (int j=0; j<3; j++)
 						{
-							Mobility_Tnsr_tt.comp[i][j]		=	a_norm*(x_a[1][1]*e_ab_unit.comp[i]*e_ab_unit.comp[j]	+ 	y_a[1][1]*(kron_del[i][j]	- e_ab_unit.comp[i]*e_ab_unit.comp[j]	)	);
-
 							double ep_ijk_e_k = 0.0;
 							
-							for (int k =0 ; k < 3; k++ ) {ep_ijk_e_k+=Levi_Civi[i][j][k]*e_ab_unit.comp[k];}  
+						for (int k=0; k<3; k++)
+							{	
+
+								double ep_jkl_e_l = 0.0;
+								double ep_ikl_e_l = 0.0;
+								
+								for (int l=0; l<3; l++)
+									{
+										ep_jkl_e_l	+=	Levi_Civi[j][k][l]*e_ab_unit.comp[l];
+										ep_ikl_e_l	+=	Levi_Civi[i][k][l]*e_ab_unit.comp[l];
+										
+										m_ijkl[i][j][k][l]	=	 (3.0/2.0)*x_m[1][1]*(e_ab_unit.comp[i]*e_ab_unit.comp[j] 					-	(1.0/3.0)*kron_del[i][j])*(e_ab_unit.comp[k]*e_ab_unit.comp[l]	
+																-(1.0/3.0)*kron_del[k][l])
+																+(1.0/2.0)*y_m[1][1]*(e_ab_unit.comp[i]*kron_del[j][l]*e_ab_unit.comp[k]	+	e_ab_unit.comp[j]*kron_del[i][l]*e_ab_unit.comp[k]
+																					+ e_ab_unit.comp[i]*kron_del[j][k]*e_ab_unit.comp[l]	+ 	e_ab_unit.comp[j]*kron_del[i][k]*e_ab_unit.comp[l]
+																					- 4.0*e_ab_unit.comp[i]*e_ab_unit.comp[j]*e_ab_unit.comp[k]*e_ab_unit.comp[l]	)
+																			
+																+(1.0/2.0)*z_m[1][1]*(kron_del[i][k]*kron_del[j][l]		+ 	kron_del[j][k]*kron_del[i][l]	- 	kron_del[i][j]*kron_del[k][l]
+																+ e_ab_unit.comp[i]*e_ab_unit.comp[j]*kron_del[k][l]	+	kron_del[i][j]*e_ab_unit.comp[k]*e_ab_unit.comp[l]	
+																+ 2.0*e_ab_unit.comp[i]*e_ab_unit.comp[j]*e_ab_unit.comp[k]*e_ab_unit.comp[l]
+																- e_ab_unit.comp[i]*kron_del[j][l]*e_ab_unit.comp[k]	- 	e_ab_unit.comp[j]*kron_del[i][l]*e_ab_unit.comp[k]
+																- e_ab_unit.comp[i]*kron_del[j][k]*e_ab_unit.comp[l]	- 	e_ab_unit.comp[j]*kron_del[i][k]*e_ab_unit.comp[l]
+																);
+																																							
+									}	// l
+									
+								ep_ijk_e_k					+=	Levi_Civi[i][j][k]*e_ab_unit.comp[k];
+								
+								g_ijk[i][j][k]				=	g_norm*(x_g[1][1]*(e_ab_unit.comp[i]*e_ab_unit.comp[j] 	-	(1.0/3.0)*kron_del[i][j])*e_ab_unit.comp[k]
+																+ 		y_g[1][1]*(e_ab_unit.comp[i]*kron_del[j][k]		+ 	e_ab_unit.comp[j]*kron_del[i][k]	-	2.0*e_ab_unit.comp[i]*e_ab_unit.comp[j]*e_ab_unit.comp[k]	)	);
+										
+								h_ijk[i][j][k]				= 	h_norm*(y_h[1][1]*(e_ab_unit.comp[i]*ep_jkl_e_l			+	e_ab_unit.comp[j]*ep_ikl_e_l										)	);
+							}	// k		
+
+							Mobility_Tnsr_tt.comp[i][j]		=	a_norm*(x_a[1][1]*e_ab_unit.comp[i]*e_ab_unit.comp[j]	+ 	y_a[1][1]*(kron_del[i][j]	- e_ab_unit.comp[i]*e_ab_unit.comp[j]	)	);
 							
 							Mobility_Tnsr_rt.comp[i][j]		=	b_norm*(													y_b[1][1]*ep_ijk_e_k													);
 						
@@ -312,8 +358,8 @@ for (int a=0; a<NrParticles; a++)
 
 		//						cout << "expresssion"	<< endl;				
 		//						cout << Mobility_Tnsr_rt.comp[i][j] << endl;		
-						}
-					}
+						}	// j
+					}	// i
 		/*
 					for (int i=0; i<3; i++)
 					{

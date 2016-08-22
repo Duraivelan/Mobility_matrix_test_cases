@@ -369,53 +369,67 @@ for (int a=0; a<NrParticles; a++)
 							cout << Mobility_Tnsr_rt.comp[i][j] << endl;
 						}
 					}														
-		*/	
+			
 				Mobility_Tnsr_tt	=	 	Unit_diag * tau ;
 											
 				Mobility_Tnsr_rr	=		Unit_diag * temp2 ;
 				Mobility_Tnsr_rt	= 		null33D ;
 				Mobility_Tnsr_tr	= 		null33D ;
-				Mobility_Tnsr_td	= 		null35D ;
-				Mobility_Tnsr_dt	= 		null53D ;
-							
-								
-				for (int i=0; i<3; i++)
-					{
-					for (int j=0; j<3; j++)
-						{
-						for (int k=0; k<3; k++)
-							{
-								
-							}	// k
-						}	//j
-					}	//i				
+		*/
 
 			 } else {
-			
+				 					
 				for (int i=0; i<3; i++)
 					{
 					for (int j=0; j<3; j++)
 						{
-							Mobility_Tnsr_tt.comp[i][j]		=	a_norm*(x_a[1][0]*e_ab_unit.comp[i]*e_ab_unit.comp[j]	+ 	y_a[1][0]*(kron_del[i][j]	- e_ab_unit.comp[i]*e_ab_unit.comp[j]	)	);
-									
-
-
 							double ep_ijk_e_k = 0.0;
 							
-							for (int k =0 ; k < 3; k++ ) {ep_ijk_e_k+=Levi_Civi[i][j][k]*e_ab_unit.comp[k];}  
+						for (int k=0; k<3; k++)
+							{	
+
+								double ep_jkl_e_l = 0.0;
+								double ep_ikl_e_l = 0.0;
+								
+								for (int l=0; l<3; l++)
+									{
+										ep_jkl_e_l	+=	Levi_Civi[j][k][l]*e_ab_unit.comp[l];
+										ep_ikl_e_l	+=	Levi_Civi[i][k][l]*e_ab_unit.comp[l];
+										
+										m_ijkl[i][j][k][l]	=	 (3.0/2.0)*x_m[1][0]*(e_ab_unit.comp[i]*e_ab_unit.comp[j] 					-	(1.0/3.0)*kron_del[i][j])*(e_ab_unit.comp[k]*e_ab_unit.comp[l]	
+																-(1.0/3.0)*kron_del[k][l])
+																+(1.0/2.0)*y_m[1][0]*(e_ab_unit.comp[i]*kron_del[j][l]*e_ab_unit.comp[k]	+	e_ab_unit.comp[j]*kron_del[i][l]*e_ab_unit.comp[k]
+																					+ e_ab_unit.comp[i]*kron_del[j][k]*e_ab_unit.comp[l]	+ 	e_ab_unit.comp[j]*kron_del[i][k]*e_ab_unit.comp[l]
+																					- 4.0*e_ab_unit.comp[i]*e_ab_unit.comp[j]*e_ab_unit.comp[k]*e_ab_unit.comp[l]	)
+																			
+																+(1.0/2.0)*z_m[1][0]*(kron_del[i][k]*kron_del[j][l]		+ 	kron_del[j][k]*kron_del[i][l]	- 	kron_del[i][j]*kron_del[k][l]
+																+ e_ab_unit.comp[i]*e_ab_unit.comp[j]*kron_del[k][l]	+	kron_del[i][j]*e_ab_unit.comp[k]*e_ab_unit.comp[l]	
+																+ 2.0*e_ab_unit.comp[i]*e_ab_unit.comp[j]*e_ab_unit.comp[k]*e_ab_unit.comp[l]
+																- e_ab_unit.comp[i]*kron_del[j][l]*e_ab_unit.comp[k]	- 	e_ab_unit.comp[j]*kron_del[i][l]*e_ab_unit.comp[k]
+																- e_ab_unit.comp[i]*kron_del[j][k]*e_ab_unit.comp[l]	- 	e_ab_unit.comp[j]*kron_del[i][k]*e_ab_unit.comp[l]
+																);
+																																							
+									}	// l
+									
+								ep_ijk_e_k					+=	Levi_Civi[i][j][k]*e_ab_unit.comp[k];
+								
+								g_ijk[i][j][k]				=	g_norm*(x_g[1][0]*(e_ab_unit.comp[i]*e_ab_unit.comp[j] 	-	(1.0/3.0)*kron_del[i][j])*e_ab_unit.comp[k]
+																+ 		y_g[1][0]*(e_ab_unit.comp[i]*kron_del[j][k]		+ 	e_ab_unit.comp[j]*kron_del[i][k]	-	2.0*e_ab_unit.comp[i]*e_ab_unit.comp[j]*e_ab_unit.comp[k]	)	);
+										
+								h_ijk[i][j][k]				= 	h_norm*(y_h[1][1]*(e_ab_unit.comp[i]*ep_jkl_e_l			+	e_ab_unit.comp[j]*ep_ikl_e_l										)	);
+							}	// k		
+
+							Mobility_Tnsr_tt.comp[i][j]		=	a_norm*(x_a[1][0]*e_ab_unit.comp[i]*e_ab_unit.comp[j]	+ 	y_a[1][0]*(kron_del[i][j]	- e_ab_unit.comp[i]*e_ab_unit.comp[j]	)	);
 							
 							Mobility_Tnsr_rt.comp[i][j]		=	b_norm*(													y_b[1][0]*ep_ijk_e_k													);
-							
+						
+							Mobility_Tnsr_rr.comp[i][j]		=	c_norm*(x_c[1][0]*e_ab_unit.comp[i]*e_ab_unit.comp[j]	+ 	y_c[1][0]*(kron_del[i][j]	- e_ab_unit.comp[i]*e_ab_unit.comp[j]	)	);
+									
 							Mobility_Tnsr_tr	= 	    Mobility_Tnsr_rt*(1.0);		
-							
-							Mobility_Tnsr_rr.comp[i][j]		=	c_norm*(x_c[0][1]*e_ab_unit.comp[i]*e_ab_unit.comp[j]	+ 	y_c[0][1]*(kron_del[i][j]	- e_ab_unit.comp[i]*e_ab_unit.comp[j]	)	);
-
-
 		//						cout << "expresssion"	<< endl;				
-		//						cout << Mobility_Tnsr_tr.comp[i][j] << endl;	
-
-						}
-					}
+		//						cout << Mobility_Tnsr_rt.comp[i][j] << endl;		
+						}	// j
+					}	// i					
 									
 	/*			Mobility_Tnsr_tt	=	(	Unit_diag
 											+	(Pab)*e_ab2_inv
@@ -438,6 +452,49 @@ for (int a=0; a<NrParticles; a++)
 						}
 					}		
 	*/		}
+	
+//	extract the reduced index mobility tesnors from g_ijk, h_ijk and m_ijkl
+
+// based on the equation mu^dt_{\p\g} = (e^p)_{\a\b}*mu^dt_{\a\b\g}	, etc in wouter notes equation no : 422 , version : 110816_1556
+	
+	Mobility_Tnsr_dt	= 		null53D ;	
+	Mobility_Tnsr_dr	= 		null53D ;	
+	Mobility_Tnsr_dd	= 		null55D ;	
+	
+	for (int p=0; p<5; p++)
+		{
+		for (int g=0; g<3; g++)
+			{
+			for (int a=0; a<3; a++)
+				{
+				for (int b=0; b<3; b++)
+					{		
+						Mobility_Tnsr_dt.comp[p][g]		+=		e[p][a][b]*g_ijk[a][b][p];	
+						Mobility_Tnsr_dr.comp[p][g]		+=		e[p][a][b]*h_ijk[a][b][p];		
+						Mobility_Tnsr_td.comp[g][p]		+=		e[p][a][b]*g_ijk[a][b][p];	
+						Mobility_Tnsr_tr.comp[g][p]		+=		e[p][a][b]*h_ijk[a][b][p];		
+					}
+				}				
+			}
+		for (int s=0; s<5; s++)
+			{
+			for (int a=0; a<3; a++)
+				{
+				for (int b=0; b<3; b++)
+					{
+					for (int g=0; g<3; g++)
+						{
+						for (int d=0; d<3; d++)
+							{							
+								Mobility_Tnsr_dd.comp[p][s]		+=		e[p][a][b]*m_ijkl[a][b][g][d]*e[s][g][d];			
+							}
+						}													
+					}
+				}
+			}
+		}		
+	
+	
 			for (int l=0; l<3; l++)
 				{
 					for (int k=0; k<3; k++)
@@ -447,16 +504,57 @@ for (int a=0; a<NrParticles; a++)
 							mu_6N[l+3*k+9*j+i*9*NrParticles+18*NrParticles*NrParticles] 	=	 Mobility_Tnsr_rt.comp[k][l];
 							mu_6N[l+3*k+9*j+i*9*NrParticles+27*NrParticles*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];		*/					
 							// column major format
-							zeta_11N[k+6*NrParticles*l+3*a+18*NrParticles*b] 					=	 Mobility_Tnsr_tt.comp[k][l];
-							zeta_11N[k+6*NrParticles*l+3*a+18*NrParticles*b+18*NrParticles*NrParticles] 	=	 Mobility_Tnsr_tr.comp[k][l];
-							zeta_11N[k+6*NrParticles*l+3*a+18*NrParticles*b+3*NrParticles] 	=	 Mobility_Tnsr_rt.comp[k][l];
-							zeta_11N[k+6*NrParticles*l+3*a+18*NrParticles*b+18*NrParticles*NrParticles+3*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];							
-							zeta_11N[k+6*NrParticles*l+3*b+18*NrParticles*a] 					=	 Mobility_Tnsr_tt.comp[k][l];
-							zeta_11N[k+6*NrParticles*l+3*b+18*NrParticles*a+18*NrParticles*NrParticles] 	=	 -Mobility_Tnsr_rt.comp[k][l];
-							zeta_11N[k+6*NrParticles*l+3*b+18*NrParticles*a+3*NrParticles] 	=	 -Mobility_Tnsr_rt.comp[k][l];
-							zeta_11N[k+6*NrParticles*l+3*b+18*NrParticles*a+18*NrParticles*NrParticles+3*NrParticles] 	=	 Mobility_Tnsr_rr.comp[k][l];
-						}
-				}	
+							zeta_11N[k	+	11*NrParticles*l	+	3*a	+	33*NrParticles*b														] 	=	 Mobility_Tnsr_tt.comp[k][l];
+							zeta_11N[k	+	11*NrParticles*l	+	3*a	+	33*NrParticles*b	+	33*NrParticles*NrParticles						] 	=	 Mobility_Tnsr_tr.comp[k][l];
+							zeta_11N[k	+	11*NrParticles*l	+	3*a	+	33*NrParticles*b	+	3*NrParticles									] 	=	 Mobility_Tnsr_rt.comp[k][l];
+							zeta_11N[k	+	11*NrParticles*l	+	3*a	+	33*NrParticles*b	+	33*NrParticles*NrParticles	+	3*NrParticles	] 	=	 Mobility_Tnsr_rr.comp[k][l];							
+							zeta_11N[k	+	11*NrParticles*l	+	3*b	+	33*NrParticles*a														] 	=	 Mobility_Tnsr_tt.comp[k][l];
+							zeta_11N[k	+	11*NrParticles*l	+	3*b	+	33*NrParticles*a	+	33*NrParticles*NrParticles						] 	=	-Mobility_Tnsr_rt.comp[k][l];
+							zeta_11N[k	+	11*NrParticles*l	+	3*b	+	33*NrParticles*a	+	3*NrParticles									] 	=	-Mobility_Tnsr_rt.comp[k][l];
+							zeta_11N[k	+	11*NrParticles*l	+	3*b	+	33*NrParticles*a	+	33*NrParticles*NrParticles	+	3*NrParticles	] 	=	 Mobility_Tnsr_rr.comp[k][l];
+/*							// column major format
+							zeta_11N[k	+	6*NrParticles*l	+	3*a	+	18*NrParticles*b														] 	=	 Mobility_Tnsr_tt.comp[k][l];
+							zeta_11N[k	+	6*NrParticles*l	+	3*a	+	18*NrParticles*b	+	18*NrParticles*NrParticles						] 	=	 Mobility_Tnsr_tr.comp[k][l];
+							zeta_11N[k	+	6*NrParticles*l	+	3*a	+	18*NrParticles*b	+	3*NrParticles									] 	=	 Mobility_Tnsr_rt.comp[k][l];
+							zeta_11N[k	+	6*NrParticles*l	+	3*a	+	18*NrParticles*b	+	18*NrParticles*NrParticles	+	3*NrParticles	] 	=	 Mobility_Tnsr_rr.comp[k][l];							
+							zeta_11N[k	+	6*NrParticles*l	+	3*b	+	18*NrParticles*a														] 	=	 Mobility_Tnsr_tt.comp[k][l];
+							zeta_11N[k	+	6*NrParticles*l	+	3*b	+	18*NrParticles*a	+	18*NrParticles*NrParticles						] 	=	-Mobility_Tnsr_rt.comp[k][l];
+							zeta_11N[k	+	6*NrParticles*l	+	3*b	+	18*NrParticles*a	+	3*NrParticles									] 	=	-Mobility_Tnsr_rt.comp[k][l];
+							zeta_11N[k	+	6*NrParticles*l	+	3*b	+	18*NrParticles*a	+	18*NrParticles*NrParticles	+	3*NrParticles	] 	=	 Mobility_Tnsr_rr.comp[k][l];
+*/						}
+				}
+				
+			for (int l=0; l<5; l++)
+				{
+				for (int k=0; k<3; k++)
+					{				
+						// column major format
+						zeta_11N[k	+	11*NrParticles*l	+	3*a	+	55*NrParticles*b	+	66*NrParticles*NrParticles						] 	=	 Mobility_Tnsr_td.comp[k][l];
+						zeta_11N[k	+	11*NrParticles*l	+	3*a	+	55*NrParticles*b	+	66*NrParticles*NrParticles	+	3*NrParticles	] 	=	 Mobility_Tnsr_rd.comp[k][l];
+						zeta_11N[k	+	11*NrParticles*l	+	3*b	+	55*NrParticles*a	+	66*NrParticles*NrParticles						] 	=	 Mobility_Tnsr_td.comp[k][l];
+						zeta_11N[k	+	11*NrParticles*l	+	3*b	+	55*NrParticles*a	+	66*NrParticles*NrParticles	+	3*NrParticles	] 	=	 Mobility_Tnsr_rd.comp[k][l];
+						
+					}
+				}					
+			for (int l=0; l<3; l++)
+				{
+				for (int k=0; k<5; k++)
+					{				
+						// column major format
+						zeta_11N[k	+	11*NrParticles*l	+	5*a	+	33*NrParticles*b	+	6*NrParticles									] 	=	 Mobility_Tnsr_dt.comp[k][l];
+						zeta_11N[k	+	11*NrParticles*l	+	5*a	+	33*NrParticles*b	+	33*NrParticles*NrParticles	+	6*NrParticles	] 	=	 Mobility_Tnsr_dr.comp[k][l];
+					}
+				}
+			for (int l=0; l<5; l++)
+				{
+				for (int k=0; k<5; k++)
+					{				
+						// column major format
+						zeta_11N[k	+	11*NrParticles*l	+	5*a	+	55*NrParticles*b	+	66*NrParticles				+	6*NrParticles	] 	=	 Mobility_Tnsr_dd.comp[k][l];
+						zeta_11N[k	+	11*NrParticles*l	+	5*b	+	55*NrParticles*a	+	66*NrParticles				+	6*NrParticles	] 	=	 Mobility_Tnsr_dd.comp[k][l];
+					}
+				}
+
 				
 			}	
 

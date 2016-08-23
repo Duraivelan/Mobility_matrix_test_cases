@@ -302,8 +302,10 @@ for (int a=0; a<NrParticles; a++)
 				double	a_norm = 1.0/(6.0*M_PI*eta_0*particle[a].radius);						// mobility matrix a non-dimensionalized by 6*pi*mu*r
 				double	b_norm = 1.0/(6.0*M_PI*eta_0*particle[a].radius*particle[a].radius);						// mobility matrix a non-dimensionalized by 6*pi*mu*r2
 				double	c_norm = 1.0/(6.0*M_PI*eta_0*particle[a].radius*particle[a].radius*particle[a].radius);						// mobility matrix a non-dimensionalized by 6*pi*mu*r3
-				double	g_norm = 20.0/18.0;											//		assuming correction factor of 6*pi*mu*r3/(20*pi*mu*r3/3)	
-				double	h_norm = 20.0/18.0;											//		assuming correction factor of 6*pi*mu*r3/(20*pi*mu*r3/3)	
+				double	g_norm = 1.0/(6.0*M_PI*eta_0*particle[a].radius*particle[a].radius*particle[a].radius);						//		assuming correction factor of 6*pi*mu*r3	
+				double	h_norm = 1.0/(6.0*M_PI*eta_0*particle[a].radius*particle[a].radius*particle[a].radius);						//		assuming correction factor of 6*pi*mu*r3				
+			//	double	g_norm = 20.0/18.0;											//		assuming correction factor of 6*pi*mu*r3/(20*pi*mu*r3/3)	
+			//	double	h_norm = 20.0/18.0;											//		assuming correction factor of 6*pi*mu*r3/(20*pi*mu*r3/3)	
 				double	m_norm = 1.0/(6.0*M_PI*eta_0*particle[a].radius*particle[a].radius*particle[a].radius);						//		assuming correction factor of 6*pi*mu*r3	
 				
 				if(a==b) {
@@ -472,7 +474,7 @@ for (int a=0; a<NrParticles; a++)
 						Mobility_Tnsr_dt.comp[p][g]		+=		e[p][a][b]*g_ijk[a][b][p];	
 						Mobility_Tnsr_dr.comp[p][g]		+=		e[p][a][b]*h_ijk[a][b][p];		
 						Mobility_Tnsr_td.comp[g][p]		+=		e[p][a][b]*g_ijk[a][b][p];	
-						Mobility_Tnsr_tr.comp[g][p]		+=		e[p][a][b]*h_ijk[a][b][p];		
+						Mobility_Tnsr_rd.comp[g][p]		+=		e[p][a][b]*h_ijk[a][b][p];		
 					}
 				}				
 			}
@@ -543,6 +545,8 @@ for (int a=0; a<NrParticles; a++)
 						// column major format
 						zeta_11N[k	+	11*NrParticles*l	+	5*a	+	33*NrParticles*b	+	6*NrParticles									] 	=	 Mobility_Tnsr_dt.comp[k][l];
 						zeta_11N[k	+	11*NrParticles*l	+	5*a	+	33*NrParticles*b	+	33*NrParticles*NrParticles	+	6*NrParticles	] 	=	 Mobility_Tnsr_dr.comp[k][l];
+						zeta_11N[k	+	11*NrParticles*l	+	5*b	+	33*NrParticles*a	+	6*NrParticles									] 	=	 Mobility_Tnsr_dt.comp[k][l];
+						zeta_11N[k	+	11*NrParticles*l	+	5*b	+	33*NrParticles*a	+	33*NrParticles*NrParticles	+	6*NrParticles	] 	=	 Mobility_Tnsr_dr.comp[k][l];						
 					}
 				}
 			for (int l=0; l<5; l++)
@@ -564,13 +568,23 @@ for (int a=0; a<NrParticles; a++)
 	mtrx3D Resistance_Tnsr_tr;
 	mtrx3D Resistance_Tnsr_rt;
 	mtrx3D Resistance_Tnsr_rr;	
-	
+	mtrx35D Resistance_Tnsr_rd;
+	mtrx35D Resistance_Tnsr_td;
+	mtrx53D Resistance_Tnsr_dt;
+	mtrx53D Resistance_Tnsr_dr;
+	mtrx55D Resistance_Tnsr_dd;
+		
 	mtrx3D Friction_Tnsr_tt(0.0,0.0,0.0);
 	mtrx3D Friction_Tnsr_tr(0.0,0.0,0.0);
 	mtrx3D Friction_Tnsr_rt(0.0,0.0,0.0);
 	mtrx3D Friction_Tnsr_rr(0.0,0.0,0.0);
-   			
-	inverse ( zeta_11N , 6*NrParticles )	 ; 							
+ 	mtrx35D Friction_Tnsr_dt;
+	mtrx35D Friction_Tnsr_dr;
+	mtrx53D Friction_Tnsr_td;
+	mtrx53D Friction_Tnsr_rd;
+	mtrx55D Friction_Tnsr_dd;
+	  			
+	inverse ( zeta_11N ,11*NrParticles )	 ; 							
 					
 	for (int i=0; i<NrParticles; i++)
 		{
@@ -592,13 +606,24 @@ for (int a=0; a<NrParticles; a++)
 							for (int k=0; k<3; k++)
 								{
 							
+
+// 									11N format 
+									Resistance_Tnsr_tt.comp[k][l] =	zeta_11N[k	+	11*NrParticles*l	+	3*i	+	33*NrParticles*j														];
+									Resistance_Tnsr_tr.comp[k][l] =	zeta_11N[k	+	11*NrParticles*l	+	3*i	+	33*NrParticles*j	+	33*NrParticles*NrParticles						];
+									Resistance_Tnsr_rt.comp[k][l] =	zeta_11N[k	+	11*NrParticles*l	+	3*i	+	33*NrParticles*j	+	3*NrParticles									];
+									Resistance_Tnsr_rr.comp[k][l] = zeta_11N[k	+	11*NrParticles*l	+	3*i	+	33*NrParticles*j	+	33*NrParticles*NrParticles	+	3*NrParticles	];
+
+
+/*
+// 									6N format
 									Resistance_Tnsr_tt.comp[k][l] = zeta_11N[k+6*NrParticles*l+3*i+18*NrParticles*j] ;
 									Resistance_Tnsr_tr.comp[k][l] = zeta_11N[k+6*NrParticles*l+3*i+18*NrParticles*j+18*NrParticles*NrParticles]	;
 									Resistance_Tnsr_rt.comp[k][l] = zeta_11N[k+6*NrParticles*l+3*i+18*NrParticles*j+3*NrParticles] ;
 									Resistance_Tnsr_rr.comp[k][l] = zeta_11N[k+6*NrParticles*l+3*i+18*NrParticles*j+18*NrParticles*NrParticles+3*NrParticles] ;
-									
-								}
+								
+*/								}
 						}
+					
 					
 					Friction_Tnsr_tt += Resistance_Tnsr_tt ;  
 					Friction_Tnsr_tr += ( Resistance_Tnsr_tr    -  ( Resistance_Tnsr_tt*Aj )  ) ;

@@ -578,11 +578,11 @@ for (int a=0; a<NrParticles; a++)
 	mtrx3D Friction_Tnsr_tr(0.0,0.0,0.0);
 	mtrx3D Friction_Tnsr_rt(0.0,0.0,0.0);
 	mtrx3D Friction_Tnsr_rr(0.0,0.0,0.0);
- 	mtrx35D Friction_Tnsr_dt;
-	mtrx35D Friction_Tnsr_dr;
-	mtrx53D Friction_Tnsr_td;
-	mtrx53D Friction_Tnsr_rd;
-	mtrx55D Friction_Tnsr_dd;
+ 	mtrx53D Friction_Tnsr_dt 	=	null53D;
+	mtrx53D Friction_Tnsr_dr	= 	null53D;
+	mtrx35D Friction_Tnsr_td	=	null35D;
+	mtrx35D Friction_Tnsr_rd	=	null35D;
+	mtrx55D Friction_Tnsr_dd	=	null55D;
 	  			
 	inverse ( zeta_11N ,11*NrParticles )	 ; 							
 					
@@ -600,6 +600,27 @@ for (int a=0; a<NrParticles; a++)
 					vctr3D col5 ( -particle[j].pos.comp[2] 	,   0.0						,  particle[j].pos.comp[0]	);
 					vctr3D col6 (  particle[j].pos.comp[1] 	,  -particle[j].pos.comp[0] , 0.0						);
 					mtrx3D	Aj(	col4 , col5 , col6 ) ; 
+
+// if	(del_j)_{\alpha,p}	*	E^{inf\tilde}_{p}	= 	E^inf_{\alpha\beta} *	r_\beta 
+
+// then	(del_j)_{\alpha,p}	*	E^{inf\tilde}_{p}	= 	(e_p)_{\alpha\beta}	*	E^{inf\tilde}_{p}	*	r_\beta	// sicne E^{inf}_{\alpha\beta}	= (e_p)_{\alpha\beta}*E^{inf\tilde}_{\p}
+
+//hence	(del_j)_{\alpha,p}							= 	(e_p)_{\alpha\beta}	*	r_\beta	
+
+					mtrx35D	Delj;
+					
+						for (int k=0; k<5; k++)
+						{							
+							for (int a=0; a<3; a++)
+							{
+								Delj.comp[a][k]	=	0.0	;
+								for (int b=0; b<3; b++)
+								{
+									Delj.comp[a][k]	+=	e[k][a][b]	*	particle[j].pos.comp[b]	;
+								}
+							}		
+						}
+	
 					
 					for (int l=0; l<3; l++)
 						{
@@ -623,13 +644,61 @@ for (int a=0; a<NrParticles; a++)
 								
 */								}
 						}
+
+
+					for (int l=0; l<5; l++)
+						{
+							for (int k=0; k<3; k++)
+								{				
+									// column major format
+									Resistance_Tnsr_td.comp[k][l] =	zeta_11N[k	+	11*NrParticles*l	+	3*i	+	55*NrParticles*j	+	66*NrParticles*NrParticles						];
+									Resistance_Tnsr_rd.comp[k][l] =	zeta_11N[k	+	11*NrParticles*l	+	3*i	+	55*NrParticles*j	+	66*NrParticles*NrParticles	+	3*NrParticles	];						
+								}
+						}					
 					
+					for (int l=0; l<3; l++)
+						{
+							for (int k=0; k<5; k++)
+								{				
+									// column major format
+									Resistance_Tnsr_dt.comp[k][l] =	zeta_11N[k	+	11*NrParticles*l	+	5*i	+	33*NrParticles*j	+	6*NrParticles									];
+									Resistance_Tnsr_dr.comp[k][l] =	zeta_11N[k	+	11*NrParticles*l	+	5*i	+	33*NrParticles*j	+	33*NrParticles*NrParticles	+	6*NrParticles	];				
+								}
+						}
 					
-					Friction_Tnsr_tt += Resistance_Tnsr_tt ;  
-					Friction_Tnsr_tr += ( Resistance_Tnsr_tr    -  ( Resistance_Tnsr_tt*Aj )  ) ;
-					//Friction_Tnsr_rt += ( Ai*Resistance_Tnsr_tt +    Resistance_Tnsr_rt    )    ; 
-					Friction_Tnsr_rr += ( Resistance_Tnsr_rr    -  ( Resistance_Tnsr_rt*Aj ) + Ai*Resistance_Tnsr_tr - Ai*Resistance_Tnsr_tt*Aj ) ; 
+					for (int l=0; l<5; l++)
+						{
+							for (int k=0; k<5; k++)
+								{				
+									// column major format
+									Resistance_Tnsr_dd.comp[k][l] =	zeta_11N[k	+	11*NrParticles*l	+	5*i	+	55*NrParticles*j	+	66*NrParticles				+	6*NrParticles	];
+								}
+						}						
 					
+					Friction_Tnsr_tt	+=		Resistance_Tnsr_tt ;  
+					Friction_Tnsr_tr 	+= 	( 	Resistance_Tnsr_tr		- 	(	Resistance_Tnsr_tt*Aj	)	)	;
+				//	Friction_Tnsr_rt 	+= 	(	Ai*Resistance_Tnsr_tt	+		Resistance_Tnsr_rt    	)    	; 
+					Friction_Tnsr_rr 	+= 	( 	Resistance_Tnsr_rr    	-	(	Resistance_Tnsr_rt*Aj 	) 	+ 			Ai*Resistance_Tnsr_tr	-	Ai*Resistance_Tnsr_tt*Aj	)	;
+				
+					for (int l=0; l<5; l++)
+						{
+						for (int k=0; k<3; k++)
+							{
+								for (int m=0; m<3; m++)
+								{
+									Friction_Tnsr_td.comp[k][l]	+=	Resistance_Tnsr_tt.comp[k][m]*Delj.comp[m][l];
+									Friction_Tnsr_rd.comp[k][l]	+= 	Resistance_Tnsr_rt.comp[k][m]*Delj.comp[m][l];
+									for (int n=0; n<3; n++)
+									{
+										Friction_Tnsr_rd.comp[k][l]	+=	Ai.comp[k][n]	*	(	Resistance_Tnsr_tt.comp[n][m]	*	Delj.comp[m][l]	+	Resistance_Tnsr_td.comp[k][l]	)	;
+									}									
+								}
+								Friction_Tnsr_td.comp[k][l]	+=	Resistance_Tnsr_td.comp[k][l]	;
+								Friction_Tnsr_rd.comp[k][l]	+=	Resistance_Tnsr_rd.comp[k][l]	;								
+							}
+						}
+
+
 			/*		xi_6x6[0] += zeta_6N[	9*j + i*9*NrParticles] ;  
 					xi_6x6[1] += zeta_6N[1+ 9*j + i*9*NrParticles] ;  
 					xi_6x6[2] += zeta_6N[2+ 9*j + i*9*NrParticles] ;  

@@ -336,7 +336,7 @@ for (int a=0; a<NrParticles; a++)
 				double Y_H[2][2] = {{	0.0		,   5.0*r_3/3.0							},{ 5.0*r_3/3.0							,	0.0		} };
 				double X_M[2][2] = {{	1.0		,   5.0*r_3			- 	51.0*r_5/8.0	},{ 5.0*r_3			- 	51.0*r_5/8.0	,	1.0		} };
 				double Y_M[2][2] = {{	1.0		,  -5.0*r_3/2.0		+ 	8.0*r_5			},{-5.0*r_3/2.0		+	8.0*r_5			,	1.0		} };
-				double Z_M[2][2] = {{	5.0/3.0	,  					 	 9.0*r_5/5.0	},{ 				 	 9.0*r_5/5.0	,	5.0/3.0	} };
+				double Z_M[2][2] = {{	1.0		,  					-	2.0*r_5			},{ 				-	 2.0*r_5		,	1.0		} };
 				
 				//				cout << x_a[0][1] << "x-comp"<<endl; 
 				
@@ -379,13 +379,13 @@ for (int a=0; a<NrParticles; a++)
 										ep_jkl_e_l	+=	Levi_Civi[j][k][l]*e_ab_unit.comp[l];
 										ep_ikl_e_l	+=	Levi_Civi[i][k][l]*e_ab_unit.comp[l];
 										
-										m_ijkl[i][j][k][l]	=	m_norm*(/*(3.0/2.0)*x_m[1][1]*(e_ab_unit.comp[i]*e_ab_unit.comp[j] 					-	(1.0/3.0)*kron_del[i][j])*(e_ab_unit.comp[k]*e_ab_unit.comp[l]	
+										m_ijkl[i][j][k][l]	=	m_norm*((3.0/2.0)*x_m[1][1]*(e_ab_unit.comp[i]*e_ab_unit.comp[j] 					-	(1.0/3.0)*kron_del[i][j])*(e_ab_unit.comp[k]*e_ab_unit.comp[l]	
 																-(1.0/3.0)*kron_del[k][l])
 																+(1.0/2.0)*y_m[1][1]*(e_ab_unit.comp[i]*kron_del[j][l]*e_ab_unit.comp[k]	+	e_ab_unit.comp[j]*kron_del[i][l]*e_ab_unit.comp[k]
 																					+ e_ab_unit.comp[i]*kron_del[j][k]*e_ab_unit.comp[l]	+ 	e_ab_unit.comp[j]*kron_del[i][k]*e_ab_unit.comp[l]
 																					- 4.0*e_ab_unit.comp[i]*e_ab_unit.comp[j]*e_ab_unit.comp[k]*e_ab_unit.comp[l]	)
 																			
-																+*/(1.0/1.0)*z_m[1][1]*(kron_del[i][k]*kron_del[j][l]		+ 	kron_del[j][k]*kron_del[i][l]	- 	kron_del[i][j]*kron_del[k][l]
+																+(1.0/2.0)*z_m[1][1]*(kron_del[i][k]*kron_del[j][l]		+ 	kron_del[j][k]*kron_del[i][l]	- 	kron_del[i][j]*kron_del[k][l] 
 																+ e_ab_unit.comp[i]*e_ab_unit.comp[j]*kron_del[k][l]	+	kron_del[i][j]*e_ab_unit.comp[k]*e_ab_unit.comp[l]	
 																+ e_ab_unit.comp[i]*e_ab_unit.comp[j]*e_ab_unit.comp[k]*e_ab_unit.comp[l]
 																- e_ab_unit.comp[i]*kron_del[j][l]*e_ab_unit.comp[k]	- 	e_ab_unit.comp[j]*kron_del[i][l]*e_ab_unit.comp[k]
@@ -519,7 +519,9 @@ for (int a=0; a<NrParticles; a++)
 																- e_ab_unit.comp[i]*kron_del[j][l]*e_ab_unit.comp[k]	- 	e_ab_unit.comp[j]*kron_del[i][l]*e_ab_unit.comp[k]
 																- e_ab_unit.comp[i]*kron_del[j][k]*e_ab_unit.comp[l]	- 	e_ab_unit.comp[j]*kron_del[i][k]*e_ab_unit.comp[l]
 																));
-																																							
+
+							//	outFile1 << M_IJKL[i][j][k][l] <<	'\t'	<< m_ijkl[i][j][k][l] << '\t'	<< "m_ijkl"  << i <<j <<k<< l<< endl;																																									
+																																																
 									}	// l
 									
 								ep_ijk_e_k					+=	Levi_Civi[i][j][k]*e_ab_unit.comp[k];
@@ -538,8 +540,8 @@ for (int a=0; a<NrParticles; a++)
 							
 							Resistance_Tnsr_rt	= 		null33D ;
 
-								cout << "M_IJKL"	<< endl;				
-								cout << M_IJKL[0][0][0][0] << endl;		
+								cout << "m_ijkl"	<< endl;				
+								cout << M_IJKL[0][0][0][0] << endl;	
 						}	// j
 					}	// i
 		/*
@@ -679,8 +681,8 @@ Resistance_Tnsr_tt.echo();
 						{
 						for (int d=0; d<3; d++)
 							{							
-								Mobility_Tnsr_dd.comp[p][s]		+=		e[p][a][b]*m_ijkl[a][b][g][d]*e[s][g][d];			
-								Resistance_Tnsr_dd.comp[p][s]		+=		e[p][a][b]*M_IJKL[a][b][g][d]*e[s][g][d];			
+								Mobility_Tnsr_dd.comp[p][s]		+=		e[p][a][b]*m_ijkl[a][b][g][d]*e_l[s][g][d];			
+								Resistance_Tnsr_dd.comp[p][s]		+=		e[p][a][b]*M_IJKL[a][b][g][d]*e_l[s][g][d];			
 							}
 						}													
 					}
@@ -833,8 +835,53 @@ Resistance_Tnsr_tt.echo();
 	mtrx35D Friction_Tnsr_rd	=	null35D;
 	mtrx55D Friction_Tnsr_dd	=	null55D;
 	  			
-	inverse ( zeta_11N ,11*NrParticles )	 ; 	
-	for (int i=0; i<121; i++)
+	inverse ( rho_11N ,11*NrParticles )	 ; 	
+
+
+	for (int l=0; l<5; l++)
+		{
+		for (int k=0; k<5; k++)
+			{				
+				// column major format
+				Resistance_Tnsr_dd.comp[k][l] =	zeta_11N[k	+	11*NrParticles*l	+	5	+	55*NrParticles	+	66*NrParticles				+	6*NrParticles	];
+			}
+		}						
+					
+
+	for (int a=0; a<3; a++)
+		{
+		for (int b=0; b<3; b++)
+			{
+			for (int g=0; g<3; g++)
+				{
+				for (int d=0; d<3; d++)
+					{
+					for (int p=0; p<5; p++)
+						{
+						for (int s=0; s<5; s++)
+							{							
+								m_ijkl[a][b][g][d]		+=		e_l[p][a][b]*Resistance_Tnsr_dd.comp[p][s]*e[s][g][d];		
+							}
+						}													
+					}
+				}
+			}
+		}	
+			for (int a=0; a<3; a++)
+				{
+				for (int b=0; b<3; b++)
+					{
+					for (int g=0; g<3; g++)
+						{
+						for (int d=0; d<3; d++)
+							{							
+								outFile1 << M_IJKL[a][b][g][d] <<	'\t'	<< m_ijkl[a][b][g][d] << '\t'	<< "m_ijkl"  << a << b << g << d << endl;		
+							}
+						}													
+					}
+				}
+
+	for (int i=0; i<11*NrParticles*11*NrParticles; i++)
 		{
 			outFile1<<zeta_11N[i]<<'\t'<<rho_11N[i]<<std::endl ;
 		}	

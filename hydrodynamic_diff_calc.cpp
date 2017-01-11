@@ -66,7 +66,7 @@ double Temp=0;
 double shear_rate = 0; //shear rate
 int ifshear = 0;// set equal to 1 for shear
 std::string dataFileName="1",dataFileName_new="1" ;
-int NrParticles=1;
+int NrParticles=2;
 double simu_time=dt;
 int step=0, nSteps=10000, frame=10;
 double vel_scale;
@@ -331,12 +331,12 @@ for (int a=0; a<NrParticles; a++)
 				double Y_C[2][2] = {{	4.0/3.0	,   2.0*r_3/3.0							},{ 2.0*r_3/3.0							,  	4.0/3.0	} }; 
 
 
-				double X_G[2][2] = {{	0.0		,  -15.0*r_2/4.0	-	39.0*r_4/16.0	},{-15.0*r_2/4.0	-	39.0*r_4/16.0	,	0.0		} };
-				double Y_G[2][2] = {{	0.0		,  -4.0*r_4								},{-4.0*r_4								,	0.0		} };
+				double X_G[2][2] = {{	0.0		,  -15.0*r_2/4.0	/*-	39.0*r_4/16.0*/	},{-15.0*r_2/4.0	/*-	39.0*r_4/16.0*/	,	0.0		} };
+				double Y_G[2][2] = {{	0.0		,  0.0/*-2.0*r_4*/								},{0.0/*-2.0*r_4*/								,	0.0		} };
 				double Y_H[2][2] = {{	0.0		,   5.0*r_3/3.0							},{ 5.0*r_3/3.0							,	0.0		} };
-				double X_M[2][2] = {{	1.0		,   5.0*r_3			- 	51.0*r_5/8.0	},{ 5.0*r_3			- 	51.0*r_5/8.0	,	1.0		} };
-				double Y_M[2][2] = {{	1.0		,  -5.0*r_3/2.0		+ 	8.0*r_5			},{-5.0*r_3/2.0		+	8.0*r_5			,	1.0		} };
-				double Z_M[2][2] = {{	1.0		,  					-	2.0*r_5			},{ 				-	 2.0*r_5		,	1.0		} };
+				double X_M[2][2] = {{	1.0		,   5.0*r_3			/*- 	51.0*r_5/8.0*/	},{ 5.0*r_3			/*- 	51.0*r_5/8.0*/	,	1.0		} };
+				double Y_M[2][2] = {{	1.0		,  -5.0*r_3/2.0		/*+ 	8.0*r_5*/			},{-5.0*r_3/2.0		/*+	8.0*r_5*/			,	1.0		} };
+				double Z_M[2][2] = {{	1.0		,  					0.0/*-	2.0*r_5*/			},{ 				0.0/*-	 2.0*r_5*/		,	1.0		} };
 				
 				//				cout << x_a[0][1] << "x-comp"<<endl; 
 				
@@ -681,8 +681,8 @@ Resistance_Tnsr_tt.echo();
 						{
 						for (int d=0; d<3; d++)
 							{							
-								Mobility_Tnsr_dd.comp[p][s]		+=		e[p][a][b]*m_ijkl[a][b][g][d]*e_l[s][g][d];			
-								Resistance_Tnsr_dd.comp[p][s]		+=		e[p][a][b]*M_IJKL[a][b][g][d]*e_l[s][g][d];			
+								Mobility_Tnsr_dd.comp[p][s]		+=		e[p][a][b]*m_ijkl[a][b][g][d]*e[s][g][d];			
+								Resistance_Tnsr_dd.comp[p][s]		+=		e[p][a][b]*M_IJKL[a][b][g][d]*e[s][g][d];			
 							}
 						}													
 					}
@@ -789,10 +789,10 @@ Resistance_Tnsr_tt.echo();
 				for (int k=0; k<3; k++)
 					{				
 						// column major format
-						zeta_11N[k	+	11*NrParticles*l	+	3*a	+	55*NrParticles*b	+	66*NrParticles*NrParticles						] 	=	 Mobility_Tnsr_td.comp[k][l];
-						zeta_11N[k	+	11*NrParticles*l	+	3*a	+	55*NrParticles*b	+	66*NrParticles*NrParticles	+	3*NrParticles	] 	=	 Mobility_Tnsr_rd.comp[k][l];
-						zeta_11N[k	+	11*NrParticles*l	+	3*b	+	55*NrParticles*a	+	66*NrParticles*NrParticles						] 	=	 Mobility_Tnsr_td.comp[k][l];
-						zeta_11N[k	+	11*NrParticles*l	+	3*b	+	55*NrParticles*a	+	66*NrParticles*NrParticles	+	3*NrParticles	] 	=	 Mobility_Tnsr_rd.comp[k][l];
+						zeta_11N[k	+	11*NrParticles*l	+	3*a	+	55*NrParticles*b	+	66*NrParticles*NrParticles						] 	=	 -Mobility_Tnsr_dt.comp[k][l];
+						zeta_11N[k	+	11*NrParticles*l	+	3*a	+	55*NrParticles*b	+	66*NrParticles*NrParticles	+	3*NrParticles	] 	=	 -Mobility_Tnsr_dr.comp[k][l];
+						zeta_11N[k	+	11*NrParticles*l	+	3*b	+	55*NrParticles*a	+	66*NrParticles*NrParticles						] 	=	 Mobility_Tnsr_dt.comp[k][l];
+						zeta_11N[k	+	11*NrParticles*l	+	3*b	+	55*NrParticles*a	+	66*NrParticles*NrParticles	+	3*NrParticles	] 	=	 Mobility_Tnsr_dr.comp[k][l];
 						
 					}
 				}					
@@ -801,8 +801,8 @@ Resistance_Tnsr_tt.echo();
 				for (int k=0; k<5; k++)
 					{				
 						// column major format
-						zeta_11N[k	+	11*NrParticles*l	+	5*a	+	33*NrParticles*b	+	6*NrParticles									] 	=	 Mobility_Tnsr_dt.comp[k][l];
-						zeta_11N[k	+	11*NrParticles*l	+	5*a	+	33*NrParticles*b	+	33*NrParticles*NrParticles	+	6*NrParticles	] 	=	 Mobility_Tnsr_dr.comp[k][l];
+						zeta_11N[k	+	11*NrParticles*l	+	5*a	+	33*NrParticles*b	+	6*NrParticles									] 	=	 -Mobility_Tnsr_dt.comp[k][l];
+						zeta_11N[k	+	11*NrParticles*l	+	5*a	+	33*NrParticles*b	+	33*NrParticles*NrParticles	+	6*NrParticles	] 	=	 -Mobility_Tnsr_dr.comp[k][l];
 						zeta_11N[k	+	11*NrParticles*l	+	5*b	+	33*NrParticles*a	+	6*NrParticles									] 	=	 Mobility_Tnsr_dt.comp[k][l];
 						zeta_11N[k	+	11*NrParticles*l	+	5*b	+	33*NrParticles*a	+	33*NrParticles*NrParticles	+	6*NrParticles	] 	=	 Mobility_Tnsr_dr.comp[k][l];						
 					}
@@ -834,10 +834,19 @@ Resistance_Tnsr_tt.echo();
 	mtrx35D Friction_Tnsr_td	=	null35D;
 	mtrx35D Friction_Tnsr_rd	=	null35D;
 	mtrx55D Friction_Tnsr_dd	=	null55D;
-	  			
-	inverse ( rho_11N ,11*NrParticles )	 ; 	
 
-
+	for (int i=0; i<11*NrParticles*11*NrParticles; i++)
+		{
+			outFile1<<zeta_11N[i]<<'\t'<<rho_11N[i]<<std::endl ;
+		}	
+			  			
+	inverse ( zeta_11N ,11*NrParticles )	 ; 	
+/*
+	for (int i=0; i<11*NrParticles*11*NrParticles; i++)
+		{
+			zeta_11N[i] = rho_11N[i] ;
+		}	
+*/		
 	for (int l=0; l<5; l++)
 		{
 		for (int k=0; k<5; k++)
@@ -860,7 +869,7 @@ Resistance_Tnsr_tt.echo();
 						{
 						for (int s=0; s<5; s++)
 							{							
-								m_ijkl[a][b][g][d]		+=		e_l[p][a][b]*Resistance_Tnsr_dd.comp[p][s]*e[s][g][d];		
+								m_ijkl[a][b][g][d]		+=		e_l[p][a][b]*Resistance_Tnsr_dd.comp[p][s]*e_l[s][g][d];		
 							}
 						}													
 					}
@@ -925,15 +934,23 @@ Resistance_Tnsr_tt.echo();
 //hence	(del_j)_{\alpha,p}							= 	(e_p)_{\alpha\beta}	*	r_\beta	
 
 					mtrx35D	Delj;
+					mtrx53D	Deli;
+					mtrx53D	Unit_tnsr_Redc;
 					
 						for (int k=0; k<5; k++)
 						{							
 							for (int a=0; a<3; a++)
 							{
 								Delj.comp[a][k]	=	0.0	;
+								Deli.comp[k][a]	=	0.0	;
 								for (int b=0; b<3; b++)
 								{
 									Delj.comp[a][k]	+=	e_l[k][a][b]	*	particle[j].pos.comp[b]	;
+									Deli.comp[k][a]	+=	e[k][a][b]		*	particle[i].pos.comp[b]	;
+									for (int c=0; c<3; c++)
+									{
+										Unit_tnsr_Redc.comp[k][a]	+=	e[k][b][c]		* (b==c)	*	particle[i].pos.comp[a]	;	
+									}
 								}
 							}		
 						}
@@ -1020,7 +1037,19 @@ Resistance_Tnsr_tt.echo();
 						{								
 							for (int m=0; m<3; m++)
 							{
-							//	Friction_Tnsr_dd.comp[l][k]	-= 	Resistance_Tnsr_dt.comp[l][m]*Delj.comp[m][k];
+								Friction_Tnsr_dd.comp[l][k]	+= 	Resistance_Tnsr_dt.comp[l][m]*Delj.comp[m][k];
+									for (int n=0; n<3; n++)
+									{
+										Friction_Tnsr_dd.comp[l][k]	+=	(	0.5	*	(
+																				Deli.comp[l][m]	*	(	Resistance_Tnsr_tt.comp[m][n]	*	Delj.comp[n][k]	+	Resistance_Tnsr_td.comp[m][k]	)
+																				+
+																				Deli.comp[k][m]	*	(	Resistance_Tnsr_tt.comp[m][n]	*	Delj.comp[n][l]	+	Resistance_Tnsr_td.comp[m][l]	)
+																				)
+																		-	(1.0/3.0)	*	(
+																				Unit_tnsr_Redc.comp[l][m]	*	(	Resistance_Tnsr_tt.comp[m][n]	*	Delj.comp[n][k]	+	Resistance_Tnsr_td.comp[m][k]	)
+																				)
+																		) ;		
+									}				
 							}	
 						
 							Friction_Tnsr_dd.comp[l][k]	+=	Resistance_Tnsr_dd.comp[l][k]	;		
@@ -1112,9 +1141,9 @@ Resistance_Tnsr_tt.echo();
 					}
 				}
 
-	/*
-	 *				6x6 format					
-	 * 				// column major format
+/*	
+	 			// 6x6 format					
+	 				// column major format
 
 					xi_11x11[0] = Friction_Tnsr_tt.comp[0][0] ;  
 					xi_11x11[1] = Friction_Tnsr_tt.comp[0][1] ;  
@@ -1155,7 +1184,22 @@ Resistance_Tnsr_tt.echo();
 					xi_11x11[33] = Friction_Tnsr_rr.comp[2][0] ;   
 					xi_11x11[34] = Friction_Tnsr_rr.comp[2][1] ; 
 					xi_11x11[35] = Friction_Tnsr_rr.comp[2][2] ; 				
-	*/	
+	*/
+	
+		outFile1<<xi_11x11[0]<<'\t'<<xi_11x11[11]<<'\t'<<xi_11x11[22]<<'\t'<<xi_11x11[33]<<'\t'<<xi_11x11[44]<<'\t'<<xi_11x11[55]<<std::endl ;
+		outFile1<<xi_11x11[1]<<'\t'<<xi_11x11[12]<<'\t'<<xi_11x11[23]<<'\t'<<xi_11x11[34]<<'\t'<<xi_11x11[45]<<'\t'<<xi_11x11[56]<<std::endl ;
+		outFile1<<xi_11x11[2]<<'\t'<<xi_11x11[13]<<'\t'<<xi_11x11[24]<<'\t'<<xi_11x11[35]<<'\t'<<xi_11x11[46]<<'\t'<<xi_11x11[57]<<std::endl ;
+		outFile1<<std::endl ;
+		outFile1<<xi_11x11[3]<<'\t'<<xi_11x11[14]<<'\t'<<xi_11x11[25]<<'\t'<<xi_11x11[36]<<'\t'<<xi_11x11[47]<<'\t'<<xi_11x11[58]<<std::endl ;
+		outFile1<<xi_11x11[4]<<'\t'<<xi_11x11[15]<<'\t'<<xi_11x11[26]<<'\t'<<xi_11x11[37]<<'\t'<<xi_11x11[48]<<'\t'<<xi_11x11[59]<<std::endl ;
+		outFile1<<xi_11x11[5]<<'\t'<<xi_11x11[16]<<'\t'<<xi_11x11[27]<<'\t'<<xi_11x11[38]<<'\t'<<xi_11x11[49]<<'\t'<<xi_11x11[60]<<std::endl ;	
+		outFile1<<std::endl ;
+		outFile1<<xi_11x11[6]<<'\t'<<xi_11x11[17]<<'\t'<<xi_11x11[28]<<'\t'<<xi_11x11[39]<<'\t'<<xi_11x11[50]<<'\t'<<xi_11x11[61]<<std::endl ;
+		outFile1<<xi_11x11[7]<<'\t'<<xi_11x11[18]<<'\t'<<xi_11x11[29]<<'\t'<<xi_11x11[40]<<'\t'<<xi_11x11[51]<<'\t'<<xi_11x11[62]<<std::endl ;
+		outFile1<<xi_11x11[8]<<'\t'<<xi_11x11[19]<<'\t'<<xi_11x11[30]<<'\t'<<xi_11x11[41]<<'\t'<<xi_11x11[52]<<'\t'<<xi_11x11[63]<<std::endl ;
+		outFile1<<xi_11x11[9]<<'\t'<<xi_11x11[20]<<'\t'<<xi_11x11[31]<<'\t'<<xi_11x11[42]<<'\t'<<xi_11x11[53]<<'\t'<<xi_11x11[64]<<std::endl ;
+		outFile1<<xi_11x11[10]<<'\t'<<xi_11x11[21]<<'\t'<<xi_11x11[32]<<'\t'<<xi_11x11[43]<<'\t'<<xi_11x11[54]<<'\t'<<xi_11x11[65]<<std::endl ;
+
 	inverse ( xi_11x11 , 11 )	 ; 			
 	for (int i=0; i<121; i++)
 		{
@@ -1272,6 +1316,7 @@ xi_11x11[32]  = D_rt_CoD.comp[2][2];
 		{
 			outFile1<<"particle position"<<'\t'<<particle[i].pos.comp[0]<<'\t'<<particle[i].pos.comp[1]<<'\t'<<particle[i].pos.comp[2]<<'\t'<<particle[i].radius<<std::endl ;
 		} 	
+/*
 		outFile1<<std::endl ;
 		outFile1<<xi_11x11[0]<<'\t'<<xi_11x11[6]<<'\t'<<xi_11x11[12]<<'\t'<<xi_11x11[18]<<'\t'<<xi_11x11[24]<<'\t'<<xi_11x11[30]<<std::endl ;
 		outFile1<<xi_11x11[1]<<'\t'<<xi_11x11[7]<<'\t'<<xi_11x11[13]<<'\t'<<xi_11x11[19]<<'\t'<<xi_11x11[25]<<'\t'<<xi_11x11[31]<<std::endl ;
@@ -1280,6 +1325,15 @@ xi_11x11[32]  = D_rt_CoD.comp[2][2];
 		outFile1<<xi_11x11[3]<<'\t'<<xi_11x11[9]<<'\t'<<xi_11x11[15]<<'\t'<<xi_11x11[21]<<'\t'<<xi_11x11[27]<<'\t'<<xi_11x11[33]<<std::endl ;
 		outFile1<<xi_11x11[4]<<'\t'<<xi_11x11[10]<<'\t'<<xi_11x11[16]<<'\t'<<xi_11x11[22]<<'\t'<<xi_11x11[28]<<'\t'<<xi_11x11[34]<<std::endl ;
 		outFile1<<xi_11x11[5]<<'\t'<<xi_11x11[11]<<'\t'<<xi_11x11[17]<<'\t'<<xi_11x11[23]<<'\t'<<xi_11x11[29]<<'\t'<<xi_11x11[35]<<std::endl ;
+*/
+		outFile1<<std::endl ;
+		outFile1<<xi_11x11[0]<<'\t'<<xi_11x11[11]<<'\t'<<xi_11x11[22]<<'\t'<<xi_11x11[33]<<'\t'<<xi_11x11[44]<<'\t'<<xi_11x11[55]<<std::endl ;
+		outFile1<<xi_11x11[1]<<'\t'<<xi_11x11[12]<<'\t'<<xi_11x11[23]<<'\t'<<xi_11x11[34]<<'\t'<<xi_11x11[45]<<'\t'<<xi_11x11[56]<<std::endl ;
+		outFile1<<xi_11x11[2]<<'\t'<<xi_11x11[13]<<'\t'<<xi_11x11[24]<<'\t'<<xi_11x11[35]<<'\t'<<xi_11x11[46]<<'\t'<<xi_11x11[57]<<std::endl ;
+		outFile1<<std::endl ;
+		outFile1<<xi_11x11[3]<<'\t'<<xi_11x11[14]<<'\t'<<xi_11x11[25]<<'\t'<<xi_11x11[36]<<'\t'<<xi_11x11[47]<<'\t'<<xi_11x11[58]<<std::endl ;
+		outFile1<<xi_11x11[4]<<'\t'<<xi_11x11[15]<<'\t'<<xi_11x11[26]<<'\t'<<xi_11x11[37]<<'\t'<<xi_11x11[48]<<'\t'<<xi_11x11[59]<<std::endl ;
+		outFile1<<xi_11x11[5]<<'\t'<<xi_11x11[16]<<'\t'<<xi_11x11[27]<<'\t'<<xi_11x11[38]<<'\t'<<xi_11x11[49]<<'\t'<<xi_11x11[60]<<std::endl ;
 		outFile1<<xi_11x11[72]<<'\t'<<xi_11x11[84]<<'\t'<<xi_11x11[96]<<'\t'<<xi_11x11[109]<<'\t'<<xi_11x11[120]<<std::endl ;
 	//	outFile1<<ctr_diff.comp[0]<<'\t'<<ctr_diff.comp[1]<<'\t'<<ctr_diff.comp[2]<<std::endl ;
 
@@ -1294,6 +1348,12 @@ xi_11x11[32]  = D_rt_CoD.comp[2][2];
 							Friction_Tnsr_rr.comp[k][l]	=	xi_11x11[k	+	11*l	+	33	+	3	];							
 						}
 				}
+				
+	for (int i=0; i<11; i++)
+		{
+			outFile1<<xi_11x11[0+i]<<'\t'<<xi_11x11[11+i]<<'\t'<<xi_11x11[22+i]<<'\t'<<xi_11x11[33+i]<<'\t'<<xi_11x11[44+i]<<'\t'<<xi_11x11[55+i]<<'\t'<<xi_11x11[66+i]<<'\t'<<xi_11x11[77+i]<<'\t'<<xi_11x11[88+i]<<'\t'<<xi_11x11[99+i]<<'\t'<<xi_11x11[110+i]<<std::endl ;
+		} 
+						
 /*	Friction_Tnsr_tt.echo();
 	Friction_Tnsr_tr.echo();
 	Friction_Tnsr_rr.echo(); */

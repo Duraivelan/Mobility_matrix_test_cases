@@ -688,8 +688,8 @@ for (int s=0; s<3; s++)
 					{		
 						Mobility_Tnsr_dt.comp[p][g]		+=		e[p][a][b]*g_ijk[a][b][g];	
 						Mobility_Tnsr_dr.comp[p][g]		+=		e[p][a][b]*h_ijk[a][b][g];		
-						Mobility_Tnsr_td.comp[g][p]		+=		g_ijk[g][a][b]*e[p][a][b];	
-						Mobility_Tnsr_rd.comp[g][p]		+=		h_ijk[g][a][b]*e[p][a][b];
+						Mobility_Tnsr_td.comp[g][p]		+=		g_ijk[a][b][g]*e[p][a][b];	
+						Mobility_Tnsr_rd.comp[g][p]		+=		h_ijk[a][b][g]*e[p][a][b];
 								
 						Resistance_Tnsr_dt.comp[p][g]		+=		e_l[p][a][b]*G_IJK[a][b][g];	
 						Resistance_Tnsr_dr.comp[p][g]		+=		e_l[p][a][b]*H_IJK[a][b][g];		
@@ -816,7 +816,7 @@ for (int s=0; s<3; s++)
 				for (int k=0; k<3; k++)
 					{				
 						// column major format
-						zeta_11N[k	+	11*NrParticles*l	+	3*a	+	55*NrParticles*b	+	66*NrParticles*NrParticles						] 	=	 Mobility_Tnsr_td.comp[k][l];
+						zeta_11N[k	+	11*NrParticles*l	+	3*a	+	55*NrParticles*b	+	66*NrParticles*NrParticles						] 	=	 -Mobility_Tnsr_td.comp[k][l];
 						zeta_11N[k	+	11*NrParticles*l	+	3*a	+	55*NrParticles*b	+	66*NrParticles*NrParticles	+	3*NrParticles	] 	=	 Mobility_Tnsr_rd.comp[k][l];
 						zeta_11N[k	+	11*NrParticles*l	+	3*b	+	55*NrParticles*a	+	66*NrParticles*NrParticles						] 	=	 Mobility_Tnsr_td.comp[k][l];
 						zeta_11N[k	+	11*NrParticles*l	+	3*b	+	55*NrParticles*a	+	66*NrParticles*NrParticles	+	3*NrParticles	] 	=	 Mobility_Tnsr_rd.comp[k][l];
@@ -830,7 +830,7 @@ for (int s=0; s<3; s++)
 						// column major format
 						zeta_11N[k	+	11*NrParticles*l	+	5*a	+	33*NrParticles*b	+	6*NrParticles									] 	=	 Mobility_Tnsr_td.comp[l][k];
 						zeta_11N[k	+	11*NrParticles*l	+	5*a	+	33*NrParticles*b	+	33*NrParticles*NrParticles	+	6*NrParticles	] 	=	 Mobility_Tnsr_rd.comp[l][k];
-						zeta_11N[k	+	11*NrParticles*l	+	5*b	+	33*NrParticles*a	+	6*NrParticles									] 	=	 Mobility_Tnsr_td.comp[l][k];
+						zeta_11N[k	+	11*NrParticles*l	+	5*b	+	33*NrParticles*a	+	6*NrParticles									] 	=	 -Mobility_Tnsr_td.comp[l][k];
 						zeta_11N[k	+	11*NrParticles*l	+	5*b	+	33*NrParticles*a	+	33*NrParticles*NrParticles	+	6*NrParticles	] 	=	 Mobility_Tnsr_rd.comp[l][k];						
 					}
 				}

@@ -66,7 +66,7 @@ double Temp=0;
 double shear_rate = 0; //shear rate
 int ifshear = 0;// set equal to 1 for shear
 std::string dataFileName="1",dataFileName_new="1" ;
-int NrParticles=2;
+int NrParticles=476;
 double simu_time=dt;
 int step=0, nSteps=10000, frame=10;
 double vel_scale;
@@ -102,11 +102,14 @@ else {
     for (int i=0;i<NrParticles;i++) {
 		std::getline(dataFile,line);
     	std::istringstream currentLine(line);    
+        currentLine >> particle[i].pos.comp[2];
         currentLine >> particle[i].pos.comp[0];
         currentLine >> particle[i].pos.comp[1];
-        currentLine >> particle[i].pos.comp[2];
-		currentLine >> particle[i].radius;
+	//	currentLine >> particle[i].radius;
 		cout<<particle[i].radius<<endl;
+		particle[i].radius = 1.0 ;
+		particle[i].pos.comp[1] -= 13.4115 ;
+	//	particle[i].pos.comp[0] *= -1.0;
     }
 }	
 	fileName=dataFileName+"/Velocities.dat";
@@ -244,7 +247,7 @@ while (( next_file = readdir(theFolder)) )
 		
 // the five base matrices for strain tensor // option 5 :  equation 419 wouter's tex version clusterdyn_110816_1556
 
-	double e[5][3][3]= {
+	double e_g_S[5][3][3]= {
 							{{1.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,-1.0}},
 							{{0.0,1.0,0.0},{1.0,0.0,0.0},{0.0,0.0,0.0}},
 							{{0.0,0.0,1.0},{0.0,0.0,0.0},{1.0,0.0,0.0}},
@@ -253,13 +256,32 @@ while (( next_file = readdir(theFolder)) )
 						};
 
 
-	double e_l[5][3][3]= {
+	double e_S_a[5][3][3]= {
 							{{ 2.0/3.0,0.0,0.0},{0.0,-1.0/3.0,0.0},{0.0,0.0,-1.0/3.0}},
 							{{0.0,0.5,0.0},{0.5,0.0,0.0},{0.0,0.0,0.0}},
 							{{0.0,0.0,0.5},{0.0,0.0,0.0},{0.5,0.0,0.0}},
 							{{0.0,0.0,0.0},{0.0,0.0,0.5},{0.0,0.5,0.0}},
 							{{-1.0/3.0,0.0,0.0},{0.0, 2.0/3.0,0.0},{0.0,0.0,-1.0/3.0}}
 						};
+   
+
+	double e_E_a[5][3][3]= {
+							{{1.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,-1.0}},
+							{{0.0,1.0,0.0},{1.0,0.0,0.0},{0.0,0.0,0.0}},
+							{{0.0,0.0,1.0},{0.0,0.0,0.0},{1.0,0.0,0.0}},
+							{{0.0,0.0,0.0},{0.0,0.0,1.0},{0.0,1.0,0.0}},
+							{{0.0,0.0,0.0},{0.0,1.0,0.0},{0.0,0.0,-1.0}}
+						};
+
+
+	double e_g_E[5][3][3]= {
+							{{ 2.0/3.0,0.0,0.0},{0.0,-1.0/3.0,0.0},{0.0,0.0,-1.0/3.0}},
+							{{0.0,0.5,0.0},{0.5,0.0,0.0},{0.0,0.0,0.0}},
+							{{0.0,0.0,0.5},{0.0,0.0,0.0},{0.5,0.0,0.0}},
+							{{0.0,0.0,0.0},{0.0,0.0,0.5},{0.0,0.5,0.0}},
+							{{-1.0/3.0,0.0,0.0},{0.0, 2.0/3.0,0.0},{0.0,0.0,-1.0/3.0}}
+						};
+   
    
    double mu_11N[121*NrParticles*NrParticles] ;  		// grand mobility matrix
    double zeta_11N[121*NrParticles*NrParticles] ={0.0} ;  	// grand resistance matrix
@@ -282,7 +304,7 @@ for (int a=0; a<NrParticles; a++)
 	{
 		for (int b=a; b<NrParticles; b++)
 			{
-				cout<<a<<b<<endl;
+		//		cout<<a<<b<<endl;
 				e_ab=particle[a].pos-particle[b].pos;
 				mtrx3D Pab(e_ab, e_ab) ;
 				e_ab2=e_ab.norm2();
@@ -361,7 +383,7 @@ for (int a=0; a<NrParticles; a++)
 				double	M_Norm = 1.0 ; // (20.0*M_PI*eta_0*particle[a].radius*particle[a].radius*particle[a].radius/3.0);						//		assuming correction factor of 20*pi*mu*r3/3	
 				
 				if(a==b) {
-				cout<<a<<b<<endl;
+		//		cout<<a<<b<<endl;
 
 				Mobility_Tnsr_tr	= 		null33D ;
 					
@@ -617,8 +639,6 @@ for (int a=0; a<NrParticles; a++)
 		//						cout << Mobility_Tnsr_rt.comp[i][j] << endl;		
 						}	// j
 					}	// i	
-
-Resistance_Tnsr_tt.echo();
 									
 	/*			Mobility_Tnsr_tt	=	(	Unit_diag
 											+	(Pab)*e_ab2_inv
@@ -659,7 +679,7 @@ Resistance_Tnsr_tt.echo();
 		
 	Resistance_Tnsr_td	= 		null35D ;	
 	Resistance_Tnsr_rd	= 		null35D ;	
-
+/*
 outFile1<<"g_ijk"<<endl;
 
 for (int s=0; s<3; s++)
@@ -677,6 +697,14 @@ for (int s=0; s<3; s++)
 		outFile1 << setw(10) << H_IJK[s][1][0] << "  " << setw(10) << H_IJK[s][1][1] << "  " << setw(10) << H_IJK[s][1][2] << endl;
 		outFile1 << setw(10) << H_IJK[s][2][0] << "  " << setw(10) << H_IJK[s][2][1] << "  " << setw(10) << H_IJK[s][2][2] << endl;
     }
+*/	
+
+	double G_IJK_temp[3][3][3] = {
+							{{0.0,0.0,0.0},{0.0,0.0,1.0},{0.0,-1.0,0.0}},
+							{{0.0,0.0,-1.0},{0.0,0.0,0.0},{1.0,0.0,0.0}},
+							{{0.0,1.0,0.0},{-1.0,0.0,0.0},{0.0,0.0,0.0}}
+							};
+	
 	
 	for (int p=0; p<5; p++)
 		{
@@ -686,15 +714,15 @@ for (int s=0; s<3; s++)
 				{
 				for (int b=0; b<3; b++)
 					{		
-						Mobility_Tnsr_dt.comp[p][g]		+=		e[p][a][b]*g_ijk[a][b][g];	
-						Mobility_Tnsr_dr.comp[p][g]		+=		e[p][a][b]*h_ijk[a][b][g];		
-						Mobility_Tnsr_td.comp[g][p]		+=		g_ijk[a][b][g]*e[p][a][b];	
-						Mobility_Tnsr_rd.comp[g][p]		+=		h_ijk[a][b][g]*e[p][a][b];
+						Mobility_Tnsr_dt.comp[p][g]		+=		e_E_a[p][a][b]*g_ijk[a][b][g];	
+						Mobility_Tnsr_dr.comp[p][g]		+=		e_E_a[p][a][b]*h_ijk[a][b][g];		
+						Mobility_Tnsr_td.comp[g][p]		+=		g_ijk[a][b][g]*e_g_S[p][a][b];	
+						Mobility_Tnsr_rd.comp[g][p]		+=		h_ijk[a][b][g]*e_g_S[p][a][b];
 								
-						Resistance_Tnsr_dt.comp[p][g]		+=		e_l[p][a][b]*G_IJK[a][b][g];	
-						Resistance_Tnsr_dr.comp[p][g]		+=		e_l[p][a][b]*H_IJK[a][b][g];		
-						Resistance_Tnsr_td.comp[g][p]		+=		e_l[p][a][b]*G_IJK[a][b][g];
-						Resistance_Tnsr_rd.comp[g][p]		+=		e_l[p][a][b]*H_IJK[a][b][g];
+						Resistance_Tnsr_dt.comp[p][g]		+=		e_S_a[p][a][b]*G_IJK[a][b][g];	
+						Resistance_Tnsr_dr.comp[p][g]		+=		e_S_a[p][a][b]*H_IJK[a][b][g];		
+						Resistance_Tnsr_td.comp[g][p]		+=		e_g_E[p][a][b]*G_IJK[a][b][g];
+						Resistance_Tnsr_rd.comp[g][p]		+=		e_g_E[p][a][b]*H_IJK[a][b][g];
 					}
 				}				
 			}
@@ -708,8 +736,8 @@ for (int s=0; s<3; s++)
 						{
 						for (int d=0; d<3; d++)
 							{							
-								Mobility_Tnsr_dd.comp[p][s]		+=		e[p][a][b]*m_ijkl[a][b][g][d]*e[s][g][d];			
-								Resistance_Tnsr_dd.comp[p][s]		+=		e_l[p][a][b]*M_IJKL[a][b][g][d]*e_l[s][g][d];			
+								Mobility_Tnsr_dd.comp[p][s]		+=		e_E_a[p][a][b]*m_ijkl[a][b][g][d]*e_g_S[s][g][d];			
+								Resistance_Tnsr_dd.comp[p][s]		+=		e_S_a[p][a][b]*M_IJKL[a][b][g][d]*e_g_E[s][g][d];			
 							}
 						}													
 					}
@@ -862,9 +890,9 @@ for (int s=0; s<3; s++)
 	mtrx35D Friction_Tnsr_rd	=	null35D;
 	mtrx55D Friction_Tnsr_dd	=	null55D;
 
-	      for (int i=0;i<22;i++)
+	      for (int i=0;i<33;i++)
        { 
-               for(int j=0;j<22;j++)
+               for(int j=0;j<33;j++)
                        {
                outFile1<< std::setprecision(5) <<zeta_11N[i+11*NrParticles*j]<<'\t' ;
                        }
@@ -873,17 +901,17 @@ for (int s=0; s<3; s++)
                outFile1<<std::endl; 
 			  			
 	inverse ( zeta_11N ,11*NrParticles )	 ; 	
-               cout<<std::endl; 
+               cout<<"dgsgsrteshrstttttttttttttttttttttttttttt"<<std::endl; 
 
-
+/*
 	for (int i=0; i<11*NrParticles*11*NrParticles; i++)
 		{
 			zeta_11N[i] = rho_11N[i] ;
 		}	
-	
-	      for (int i=0;i<22;i++)
+*/	
+	      for (int i=0;i<33;i++)
        { 
-               for(int j=0;j<22;j++)
+               for(int j=0;j<33;j++)
                        {
                outFile1<< std::setprecision(5) <<zeta_11N[i+11*NrParticles*j]<<'\t' ;
                        }
@@ -891,7 +919,7 @@ for (int s=0; s<3; s++)
        }	
                outFile1<<std::endl; 
 	
-		
+	
 	for (int l=0; l<5; l++)
 		{
 		for (int k=0; k<5; k++)
@@ -987,11 +1015,11 @@ for (int s=0; s<3; s++)
 								Deli.comp[k][a]	=	0.0	;
 								for (int b=0; b<3; b++)
 								{
-									Delj.comp[a][k]	+=	e_l[k][b][a]	*	particle[j].pos.comp[b]	;
-									Deli.comp[k][a]	+=	e_l[k][a][b]	*	particle[i].pos.comp[b]	;
+									Delj.comp[a][k]	+=	e_g_E[k][b][a]	*	particle[j].pos.comp[b]	;
+									Deli.comp[k][a]	+=	e_g_E[k][a][b]	*	particle[i].pos.comp[b]	;
 									for (int c=0; c<3; c++)
 									{
-										Unit_tnsr_Redc.comp[k][a]	+=	e_l[k][b][c]		* (b==c)	*	particle[i].pos.comp[a]	;	
+							//			Unit_tnsr_Redc.comp[k][a]	+=	e_l[k][b][c]		* (b==c)	*	particle[i].pos.comp[a]	;	
 									}
 								}
 							}		
@@ -1062,12 +1090,12 @@ for (int s=0; s<3; s++)
 					g_ijk[a][b][g] = 0.0;
 				for (int p=0; p<5; p++)
 					{						
-							g_ijk[a][b][g]	+=		e[p][a][b]*Resistance_Tnsr_td.comp[g][p];		
+							g_ijk[a][b][g]	+=		e_E_a[p][a][b]*Resistance_Tnsr_td.comp[g][p];		
 					}													
 				}
 			}
 		}
-
+/*
 outFile1<<i<<j<<endl;
 outFile1<<"g_ijk"<<endl;
 
@@ -1078,7 +1106,7 @@ for (int s=0; s<3; s++)
 		outFile1 << setw(10) << g_ijk[s][2][0] << "  " << setw(10) << g_ijk[s][2][1] << "  " << setw(10) << g_ijk[s][2][2] << endl;
     }
     
-	for (int a=0; a<3; a++)
+*/	for (int a=0; a<3; a++)
 		{
 		for (int b=0; b<3; b++)
 			{
@@ -1088,12 +1116,12 @@ for (int s=0; s<3; s++)
 					
 				for (int p=0; p<5; p++)
 					{
-							h_ijk[a][b][g]	+=		e[p][a][b]*Resistance_Tnsr_rd.comp[g][p];		
+							h_ijk[a][b][g]	+=		e_E_a[p][a][b]*Resistance_Tnsr_rd.comp[g][p];		
 					}													
 				}
 			}
 		}
-
+/*
 outFile1<<"h_ijk"<<endl;
 
 for (int s=0; s<3; s++)
@@ -1102,7 +1130,7 @@ for (int s=0; s<3; s++)
 		outFile1 << setw(10) << h_ijk[s][1][0] << "  " << setw(10) << h_ijk[s][1][1] << "  " << setw(10) << h_ijk[s][1][2] << endl;
 		outFile1 << setw(10) << h_ijk[s][2][0] << "  " << setw(10) << h_ijk[s][2][1] << "  " << setw(10) << h_ijk[s][2][2] << endl;
     }
-    
+*/    
 	for (int a=0; a<3; a++)
 		{
 		for (int b=0; b<3; b++)
@@ -1113,13 +1141,13 @@ for (int s=0; s<3; s++)
 					
 				for (int p=0; p<5; p++)
 					{
-							h_clst_ijk[a][b][g]	+=		e[p][a][b]*Friction_Tnsr_rd.comp[g][p];		
+							h_clst_ijk[a][b][g]	+=		e_E_a[p][a][b]*Friction_Tnsr_rd.comp[g][p];		
 
 					}													
 				}
 			}
 		}
-
+/*
 outFile1<<"h_clst_ijk"<<endl;
 
 for (int s=0; s<3; s++)
@@ -1129,7 +1157,7 @@ for (int s=0; s<3; s++)
 		outFile1 << setw(10) << h_clst_ijk[s][2][0] << "  " << setw(10) << h_clst_ijk[s][2][1] << "  " << setw(10) << h_clst_ijk[s][2][2] << endl;
     }
 					
-					Friction_Tnsr_tt	+=		Resistance_Tnsr_tt ;  
+*/					Friction_Tnsr_tt	+=		Resistance_Tnsr_tt ;  
 					Friction_Tnsr_tr 	+= 	( 	Resistance_Tnsr_tr		- 	(	Resistance_Tnsr_tt*Aj	)	)	;
 				//	Friction_Tnsr_rt 	+= 	(	Ai*Resistance_Tnsr_tt	+		Resistance_Tnsr_rt    	)    	; 
 					Friction_Tnsr_rr 	+= 	( 	Resistance_Tnsr_rr    	-	(	Resistance_Tnsr_rt*Aj 	) 	+ 			Ai*Resistance_Tnsr_tr	-	Ai*Resistance_Tnsr_tt*Aj	)	;
@@ -1164,9 +1192,9 @@ for (int s=0; s<3; s++)
 																				+
 																				Deli.comp[k][m]	*	(	Resistance_Tnsr_td.comp[m][l]	)
 																				)
-																		-	(1.0/3.0)	*	(
+																		/*-	(1.0/3.0)	*	(
 																				Unit_tnsr_Redc.comp[l][m]	*	(	Resistance_Tnsr_td.comp[m][k]	)
-																				)
+																				)*/
 																		) ;		
 									for (int n=0; n<3; n++)
 									{
@@ -1175,9 +1203,9 @@ for (int s=0; s<3; s++)
 																				+
 																				Deli.comp[k][m]	*	(	Resistance_Tnsr_tt.comp[m][n]	*	Delj.comp[n][l]	)
 																				)
-																		-	(1.0/3.0)	*	(
+																		/*-	(1.0/3.0)	*	(
 																				Unit_tnsr_Redc.comp[l][m]	*	(	Resistance_Tnsr_tt.comp[m][n]	*	Delj.comp[n][k]	)
-																				)
+																				)  */
 																		) ;		
 									}	
 							}	
@@ -1231,7 +1259,7 @@ for (int s=0; s<3; s++)
 		}
 					Friction_Tnsr_rt = ~Friction_Tnsr_tr;
 
-
+/*
 			for (int l=0; l<3; l++)
 				{
 					for (int k=0; k<3; k++)
@@ -1271,7 +1299,7 @@ for (int s=0; s<3; s++)
 					}
 				}
 
-/*	
+*/	
 	 			// 6x6 format					
 	 				// column major format
 
@@ -1314,7 +1342,16 @@ for (int s=0; s<3; s++)
 					xi_11x11[33] = Friction_Tnsr_rr.comp[2][0] ;   
 					xi_11x11[34] = Friction_Tnsr_rr.comp[2][1] ; 
 					xi_11x11[35] = Friction_Tnsr_rr.comp[2][2] ; 				
-	*/
+	
+
+		outFile1<<std::endl ;
+		outFile1<<xi_11x11[0]<<'\t'<<xi_11x11[6]<<'\t'<<xi_11x11[12]<<'\t'<<xi_11x11[18]<<'\t'<<xi_11x11[24]<<'\t'<<xi_11x11[30]<<std::endl ;
+		outFile1<<xi_11x11[1]<<'\t'<<xi_11x11[7]<<'\t'<<xi_11x11[13]<<'\t'<<xi_11x11[19]<<'\t'<<xi_11x11[25]<<'\t'<<xi_11x11[31]<<std::endl ;
+		outFile1<<xi_11x11[2]<<'\t'<<xi_11x11[8]<<'\t'<<xi_11x11[14]<<'\t'<<xi_11x11[20]<<'\t'<<xi_11x11[26]<<'\t'<<xi_11x11[32]<<std::endl ;
+		outFile1<<std::endl ;
+		outFile1<<xi_11x11[3]<<'\t'<<xi_11x11[9]<<'\t'<<xi_11x11[15]<<'\t'<<xi_11x11[21]<<'\t'<<xi_11x11[27]<<'\t'<<xi_11x11[33]<<std::endl ;
+		outFile1<<xi_11x11[4]<<'\t'<<xi_11x11[10]<<'\t'<<xi_11x11[16]<<'\t'<<xi_11x11[22]<<'\t'<<xi_11x11[28]<<'\t'<<xi_11x11[34]<<std::endl ;
+		outFile1<<xi_11x11[5]<<'\t'<<xi_11x11[11]<<'\t'<<xi_11x11[17]<<'\t'<<xi_11x11[23]<<'\t'<<xi_11x11[29]<<'\t'<<xi_11x11[35]<<std::endl ;
 	
 /*		outFile1<<xi_11x11[0]<<'\t'<<xi_11x11[11]<<'\t'<<xi_11x11[22]<<'\t'<<xi_11x11[33]<<'\t'<<xi_11x11[44]<<'\t'<<xi_11x11[55]<<std::endl ;
 		outFile1<<xi_11x11[1]<<'\t'<<xi_11x11[12]<<'\t'<<xi_11x11[23]<<'\t'<<xi_11x11[34]<<'\t'<<xi_11x11[45]<<'\t'<<xi_11x11[56]<<std::endl ;
@@ -1324,14 +1361,14 @@ for (int s=0; s<3; s++)
 		outFile1<<xi_11x11[4]<<'\t'<<xi_11x11[15]<<'\t'<<xi_11x11[26]<<'\t'<<xi_11x11[37]<<'\t'<<xi_11x11[48]<<'\t'<<xi_11x11[59]<<std::endl ;
 		outFile1<<xi_11x11[5]<<'\t'<<xi_11x11[16]<<'\t'<<xi_11x11[27]<<'\t'<<xi_11x11[38]<<'\t'<<xi_11x11[49]<<'\t'<<xi_11x11[60]<<std::endl ;	
 		outFile1<<std::endl ;
-		outFile1<<xi_11x11[6]<<'\t'<<xi_11x11[17]<<'\t'<<xi_11x11[28]<<'\t'<<xi_11x11[39]<<'\t'<<xi_11x11[50]<<'\t'<<xi_11x11[61]<<std::endl ;
+/*		outFile1<<xi_11x11[6]<<'\t'<<xi_11x11[17]<<'\t'<<xi_11x11[28]<<'\t'<<xi_11x11[39]<<'\t'<<xi_11x11[50]<<'\t'<<xi_11x11[61]<<std::endl ;
 		outFile1<<xi_11x11[7]<<'\t'<<xi_11x11[18]<<'\t'<<xi_11x11[29]<<'\t'<<xi_11x11[40]<<'\t'<<xi_11x11[51]<<'\t'<<xi_11x11[62]<<std::endl ;
 		outFile1<<xi_11x11[8]<<'\t'<<xi_11x11[19]<<'\t'<<xi_11x11[30]<<'\t'<<xi_11x11[41]<<'\t'<<xi_11x11[52]<<'\t'<<xi_11x11[63]<<std::endl ;
 		outFile1<<xi_11x11[9]<<'\t'<<xi_11x11[20]<<'\t'<<xi_11x11[31]<<'\t'<<xi_11x11[42]<<'\t'<<xi_11x11[53]<<'\t'<<xi_11x11[64]<<std::endl ;
 		outFile1<<xi_11x11[10]<<'\t'<<xi_11x11[21]<<'\t'<<xi_11x11[32]<<'\t'<<xi_11x11[43]<<'\t'<<xi_11x11[54]<<'\t'<<xi_11x11[65]<<std::endl ;
 */
 
-		outFile1<<std::endl ;
+/*		outFile1<<std::endl ;
 		outFile1<<xi_11x11[0]<<'\t'<<xi_11x11[11]<<'\t'<<xi_11x11[22]<<'\t'<<xi_11x11[33]<<'\t'<<xi_11x11[44]<<'\t'<<xi_11x11[55]<<std::endl ;
 		outFile1<<xi_11x11[1]<<'\t'<<xi_11x11[12]<<'\t'<<xi_11x11[23]<<'\t'<<xi_11x11[34]<<'\t'<<xi_11x11[45]<<'\t'<<xi_11x11[56]<<std::endl ;
 		outFile1<<xi_11x11[2]<<'\t'<<xi_11x11[13]<<'\t'<<xi_11x11[24]<<'\t'<<xi_11x11[35]<<'\t'<<xi_11x11[46]<<'\t'<<xi_11x11[57]<<std::endl ;
@@ -1339,24 +1376,78 @@ for (int s=0; s<3; s++)
 		outFile1<<xi_11x11[3]<<'\t'<<xi_11x11[14]<<'\t'<<xi_11x11[25]<<'\t'<<xi_11x11[36]<<'\t'<<xi_11x11[47]<<'\t'<<xi_11x11[58]<<std::endl ;
 		outFile1<<xi_11x11[4]<<'\t'<<xi_11x11[15]<<'\t'<<xi_11x11[26]<<'\t'<<xi_11x11[37]<<'\t'<<xi_11x11[48]<<'\t'<<xi_11x11[59]<<std::endl ;
 		outFile1<<xi_11x11[5]<<'\t'<<xi_11x11[16]<<'\t'<<xi_11x11[27]<<'\t'<<xi_11x11[38]<<'\t'<<xi_11x11[49]<<'\t'<<xi_11x11[60]<<std::endl ;
-  
+  */
 	for (int a=0; a<3; a++)
 		{
 		for (int b=0; b<3; b++)
 			{
 			for (int g=0; g<3; g++)
 				{
-					h_clst_ijk[a][b][g] = 0.0;
+					h_clst_ijk[g][a][b] = 0.0;
 					
 				for (int p=0; p<5; p++)
 					{
-							h_clst_ijk[a][b][g]	+=		e[p][a][b]*Friction_Tnsr_rd.comp[g][p];		
+							h_clst_ijk[g][a][b]	+=		e_E_a[p][a][b]*Friction_Tnsr_rd.comp[g][p];		
+
+					}													
+				}
+			}
+		}
+	double g_clst_ijk[3][3][3] = {{{0}}};
+
+	for (int a=0; a<3; a++)
+		{
+		for (int b=0; b<3; b++)
+			{
+			for (int g=0; g<3; g++)
+				{
+					g_clst_ijk[g][a][b] = 0.0;
+					
+				for (int p=0; p<5; p++)
+					{
+							g_clst_ijk[g][a][b]	+=		e_E_a[p][a][b]*Friction_Tnsr_td.comp[g][p];		
 
 					}													
 				}
 			}
 		}
 
+
+cout<<"g_clst_ijk_redc"<<endl;
+
+		cout << setw(10) << Friction_Tnsr_td.comp[0][0] << "  " << setw(10) << Friction_Tnsr_td.comp[0][1] << "  " << setw(10) << Friction_Tnsr_td.comp[0][2] << "  " << setw(10) << Friction_Tnsr_td.comp[0][3] << "  " << setw(10) << Friction_Tnsr_td.comp[0][4] << endl;
+		cout << setw(10) << Friction_Tnsr_td.comp[1][0] << "  " << setw(10) << Friction_Tnsr_td.comp[1][1] << "  " << setw(10) << Friction_Tnsr_td.comp[1][2] << "  " << setw(10) << Friction_Tnsr_td.comp[1][3] << "  " << setw(10) << Friction_Tnsr_td.comp[1][4] << endl;
+		cout << setw(10) << Friction_Tnsr_td.comp[2][0] << "  " << setw(10) << Friction_Tnsr_td.comp[2][1] << "  " << setw(10) << Friction_Tnsr_td.comp[2][2] << "  " << setw(10) << Friction_Tnsr_td.comp[2][3] << "  " << setw(10) << Friction_Tnsr_td.comp[2][4] << endl;
+
+cout<<"g_clst_ijk"<<endl;
+
+for (int s=0; s<3; s++)
+	{							
+		outFile1 << setw(10) << g_clst_ijk[s][0][0] << "  " << setw(10) << g_clst_ijk[s][0][1] << "  " << setw(10) << g_clst_ijk[s][0][2] << endl;
+		outFile1 << setw(10) << g_clst_ijk[s][1][0] << "  " << setw(10) << g_clst_ijk[s][1][1] << "  " << setw(10) << g_clst_ijk[s][1][2] << endl;
+		outFile1 << setw(10) << g_clst_ijk[s][2][0] << "  " << setw(10) << g_clst_ijk[s][2][1] << "  " << setw(10) << g_clst_ijk[s][2][2] << endl;
+    }
+    
+	for (int p=0; p<5; p++)
+		{
+		for (int g=0; g<3; g++)
+			{
+				Resistance_Tnsr_td.comp[g][p] = 0.0;
+			for (int a=0; a<3; a++)
+				{
+				for (int b=0; b<3; b++)
+					{		
+						Resistance_Tnsr_td.comp[g][p]		+=		e_g_E[p][a][b]*g_clst_ijk[g][a][b];
+					}
+				}				
+			}
+		}
+cout<<"g_clst_ijk_redc"<<endl;
+
+		cout << setw(10) << Resistance_Tnsr_td.comp[0][0] << "  " << setw(10) << Resistance_Tnsr_td.comp[0][1] << "  " << setw(10) << Resistance_Tnsr_td.comp[0][2] << "  " << setw(10) << Resistance_Tnsr_td.comp[0][3] << "  " << setw(10) << Resistance_Tnsr_td.comp[0][4] << endl;
+		cout << setw(10) << Resistance_Tnsr_td.comp[1][0] << "  " << setw(10) << Resistance_Tnsr_td.comp[1][1] << "  " << setw(10) << Resistance_Tnsr_td.comp[1][2] << "  " << setw(10) << Resistance_Tnsr_td.comp[1][3] << "  " << setw(10) << Resistance_Tnsr_td.comp[1][4] << endl;
+		cout << setw(10) << Resistance_Tnsr_td.comp[2][0] << "  " << setw(10) << Resistance_Tnsr_td.comp[2][1] << "  " << setw(10) << Resistance_Tnsr_td.comp[2][2] << "  " << setw(10) << Resistance_Tnsr_td.comp[2][3] << "  " << setw(10) << Resistance_Tnsr_td.comp[2][4] << endl;
+    	
 outFile1<<"h_ijk"<<endl;
 
 for (int s=0; s<3; s++)
@@ -1376,8 +1467,133 @@ for (int s=0; s<3; s++)
                outFile1<<std::endl; 
        }	
                outFile1<<std::endl; 
+
+
+	inverse ( xi_11x11 , 6 )	 ; 			
+
+	 for (int i=0;i<6;i++)
+       { 
+               for(int j=0;j<6;j++)
+                       {
+               cout<< std::setprecision(5) <<xi_11x11[i+6*j]<<'\t' ;
+                       }
+               cout<<std::endl; 
+       }	
 		
-	inverse ( xi_11x11 , 11 )	 ; 			
+	for (int i=0; i<36; i++)
+		{
+			xi_11x11[i]*=4.1419e-14;	// multiply by kbT in erg K-1
+		} 	
+
+
+		outFile1<<std::endl ;
+		outFile1<<xi_11x11[0]<<'\t'<<xi_11x11[6]<<'\t'<<xi_11x11[12]<<'\t'<<xi_11x11[18]<<'\t'<<xi_11x11[24]<<'\t'<<xi_11x11[30]<<std::endl ;
+		outFile1<<xi_11x11[1]<<'\t'<<xi_11x11[7]<<'\t'<<xi_11x11[13]<<'\t'<<xi_11x11[19]<<'\t'<<xi_11x11[25]<<'\t'<<xi_11x11[31]<<std::endl ;
+		outFile1<<xi_11x11[2]<<'\t'<<xi_11x11[8]<<'\t'<<xi_11x11[14]<<'\t'<<xi_11x11[20]<<'\t'<<xi_11x11[26]<<'\t'<<xi_11x11[32]<<std::endl ;
+		outFile1<<std::endl ;
+		outFile1<<xi_11x11[3]<<'\t'<<xi_11x11[9]<<'\t'<<xi_11x11[15]<<'\t'<<xi_11x11[21]<<'\t'<<xi_11x11[27]<<'\t'<<xi_11x11[33]<<std::endl ;
+		outFile1<<xi_11x11[4]<<'\t'<<xi_11x11[10]<<'\t'<<xi_11x11[16]<<'\t'<<xi_11x11[22]<<'\t'<<xi_11x11[28]<<'\t'<<xi_11x11[34]<<std::endl ;
+		outFile1<<xi_11x11[5]<<'\t'<<xi_11x11[11]<<'\t'<<xi_11x11[17]<<'\t'<<xi_11x11[23]<<'\t'<<xi_11x11[29]<<'\t'<<xi_11x11[35]<<std::endl ;
+/*
+		outFile1<<std::endl ;
+		outFile1<<xi_11x11[0]<<'\t'<<xi_11x11[11]<<'\t'<<xi_11x11[22]<<'\t'<<xi_11x11[33]<<'\t'<<xi_11x11[44]<<'\t'<<xi_11x11[55]<<std::endl ;
+		outFile1<<xi_11x11[1]<<'\t'<<xi_11x11[12]<<'\t'<<xi_11x11[23]<<'\t'<<xi_11x11[34]<<'\t'<<xi_11x11[45]<<'\t'<<xi_11x11[56]<<std::endl ;
+		outFile1<<xi_11x11[2]<<'\t'<<xi_11x11[13]<<'\t'<<xi_11x11[24]<<'\t'<<xi_11x11[35]<<'\t'<<xi_11x11[46]<<'\t'<<xi_11x11[57]<<std::endl ;
+		outFile1<<std::endl ;
+		outFile1<<xi_11x11[3]<<'\t'<<xi_11x11[14]<<'\t'<<xi_11x11[25]<<'\t'<<xi_11x11[36]<<'\t'<<xi_11x11[47]<<'\t'<<xi_11x11[58]<<std::endl ;
+		outFile1<<xi_11x11[4]<<'\t'<<xi_11x11[15]<<'\t'<<xi_11x11[26]<<'\t'<<xi_11x11[37]<<'\t'<<xi_11x11[48]<<'\t'<<xi_11x11[59]<<std::endl ;
+		outFile1<<xi_11x11[5]<<'\t'<<xi_11x11[16]<<'\t'<<xi_11x11[27]<<'\t'<<xi_11x11[38]<<'\t'<<xi_11x11[49]<<'\t'<<xi_11x11[60]<<std::endl ;
+*/
+
+// using the trick of matrix inversion by parts, since the Stresslet and flow-field switch going from FTS to FTE when doing dynamics of the aggregates
+double mu_d[6][5];
+
+			for (int l=0; l<6; l++)
+				{
+				for (int k=0; k<5; k++)
+					{	
+						mu_d[l][k] = 0.0;
+				//		mu_d[l+3][k] = 0.0;
+					for (int m=0; m<3; m++)
+						{				
+							// column major format
+							mu_d[l][k]	-=	xi_11x11[l	+	6*m]*Friction_Tnsr_td.comp[m][k];
+							mu_d[l][k]	-=	xi_11x11[l	+	6*(m+3)]*Friction_Tnsr_rd.comp[m][k];
+						}
+				//	mu_d[l][k] *= g_norm;
+					}
+				}
+				
+		outFile1 << setw(10) << Friction_Tnsr_td.comp[0][0] << "  " << setw(10) << Friction_Tnsr_td.comp[0][1] << "  " << setw(10) << Friction_Tnsr_td.comp[0][2] << "  " << setw(10) << Friction_Tnsr_td.comp[0][3] << "  " << setw(10) << Friction_Tnsr_td.comp[0][4] << endl;
+		outFile1 << setw(10) << Friction_Tnsr_td.comp[1][0] << "  " << setw(10) << Friction_Tnsr_td.comp[1][1] << "  " << setw(10) << Friction_Tnsr_td.comp[1][2] << "  " << setw(10) << Friction_Tnsr_td.comp[1][3] << "  " << setw(10) << Friction_Tnsr_td.comp[1][4] << endl;
+		outFile1 << setw(10) << Friction_Tnsr_td.comp[2][0] << "  " << setw(10) << Friction_Tnsr_td.comp[2][1] << "  " << setw(10) << Friction_Tnsr_td.comp[2][2] << "  " << setw(10) << Friction_Tnsr_td.comp[2][3] << "  " << setw(10) << Friction_Tnsr_td.comp[2][4] << endl;
+ 
+ 		outFile1 << setw(10) << Friction_Tnsr_rd.comp[0][0] << "  " << setw(10) << Friction_Tnsr_rd.comp[0][1] << "  " << setw(10) << Friction_Tnsr_rd.comp[0][2] << "  " << setw(10) << Friction_Tnsr_rd.comp[0][3] << "  " << setw(10) << Friction_Tnsr_rd.comp[0][4] << endl;
+		outFile1 << setw(10) << Friction_Tnsr_rd.comp[1][0] << "  " << setw(10) << Friction_Tnsr_rd.comp[1][1] << "  " << setw(10) << Friction_Tnsr_rd.comp[1][2] << "  " << setw(10) << Friction_Tnsr_rd.comp[1][3] << "  " << setw(10) << Friction_Tnsr_rd.comp[1][4] << endl;
+		outFile1 << setw(10) << Friction_Tnsr_rd.comp[2][0] << "  " << setw(10) << Friction_Tnsr_rd.comp[2][1] << "  " << setw(10) << Friction_Tnsr_rd.comp[2][2] << "  " << setw(10) << Friction_Tnsr_rd.comp[2][3] << "  " << setw(10) << Friction_Tnsr_rd.comp[2][4] << endl;
+ 
+
+		outFile1<<std::endl ;
+		outFile1<<mu_d[0][0]<<'\t'<<mu_d[0][1]<<'\t'<<mu_d[0][2]<<'\t'<<mu_d[0][3]<<'\t'<<mu_d[0][4]<<std::endl ;
+		outFile1<<mu_d[1][0]<<'\t'<<mu_d[1][1]<<'\t'<<mu_d[1][2]<<'\t'<<mu_d[1][3]<<'\t'<<mu_d[1][4]<<std::endl ;
+		outFile1<<mu_d[2][0]<<'\t'<<mu_d[2][1]<<'\t'<<mu_d[2][2]<<'\t'<<mu_d[2][3]<<'\t'<<mu_d[2][4]<<std::endl ;
+		outFile1<<std::endl ;
+		outFile1<<mu_d[3][0]<<'\t'<<mu_d[3][1]<<'\t'<<mu_d[3][2]<<'\t'<<mu_d[3][3]<<'\t'<<mu_d[3][4]<<std::endl ;
+		outFile1<<mu_d[4][0]<<'\t'<<mu_d[4][1]<<'\t'<<mu_d[4][2]<<'\t'<<mu_d[4][3]<<'\t'<<mu_d[4][4]<<std::endl ;
+		outFile1<<mu_d[5][0]<<'\t'<<mu_d[5][1]<<'\t'<<mu_d[5][2]<<'\t'<<mu_d[5][3]<<'\t'<<mu_d[5][4]<<std::endl ;			
+		
+		for (int a=0; a<3; a++)
+		{
+		for (int b=0; b<3; b++)
+			{
+			for (int g=0; g<3; g++)
+				{
+					g_clst_ijk[g][a][b] = 0.0;
+					
+				for (int p=0; p<5; p++)
+					{
+							g_clst_ijk[g][a][b]	+=		e_S_a[p][a][b]*mu_d[g][p];		
+
+					}													
+				}
+			}
+		}
+
+
+	for (int a=0; a<3; a++)
+		{
+		for (int b=0; b<3; b++)
+			{
+			for (int g=0; g<3; g++)
+				{
+					h_clst_ijk[g][a][b] = 0.0;
+					
+				for (int p=0; p<5; p++)
+					{
+							h_clst_ijk[g][a][b]	+=		e_g_S[p][a][b]*mu_d[g+3][p];		
+
+					}													
+				}
+			}
+		}
+cout<<"g_clst_ijk"<<endl;
+
+for (int s=0; s<3; s++)
+	{							
+		outFile1 << setw(10) << g_clst_ijk[s][0][0] << "  " << setw(10) << g_clst_ijk[s][0][1] << "  " << setw(10) << g_clst_ijk[s][0][2] << endl;
+		outFile1 << setw(10) << g_clst_ijk[s][1][0] << "  " << setw(10) << g_clst_ijk[s][1][1] << "  " << setw(10) << g_clst_ijk[s][1][2] << endl;
+		outFile1 << setw(10) << g_clst_ijk[s][2][0] << "  " << setw(10) << g_clst_ijk[s][2][1] << "  " << setw(10) << g_clst_ijk[s][2][2] << endl;
+    }	
+cout<<"h_clst_ijk"<<endl;
+
+for (int s=0; s<3; s++)
+	{							
+		outFile1 << setw(10) << h_clst_ijk[s][0][0] << "  " << setw(10) << h_clst_ijk[s][0][1] << "  " << setw(10) << h_clst_ijk[s][0][2] << endl;
+		outFile1 << setw(10) << h_clst_ijk[s][1][0] << "  " << setw(10) << h_clst_ijk[s][1][1] << "  " << setw(10) << h_clst_ijk[s][1][2] << endl;
+		outFile1 << setw(10) << h_clst_ijk[s][2][0] << "  " << setw(10) << h_clst_ijk[s][2][1] << "  " << setw(10) << h_clst_ijk[s][2][2] << endl;
+    }	
+		
+/*	inverse ( xi_11x11 , 11 )	 ; 			
 	for (int i=0; i<121; i++)
 		{
 			xi_11x11[i]*=4.1419e-14;	// multiply by kbT in erg K-1
@@ -1519,7 +1735,7 @@ xi_6x6[32]  = D_rt_CoD.comp[2][2];
 		outFile1<<xi_11x11[4]<<'\t'<<xi_11x11[15]<<'\t'<<xi_11x11[26]<<'\t'<<xi_11x11[37]<<'\t'<<xi_11x11[48]<<'\t'<<xi_11x11[59]<<std::endl ;
 		outFile1<<xi_11x11[5]<<'\t'<<xi_11x11[16]<<'\t'<<xi_11x11[27]<<'\t'<<xi_11x11[38]<<'\t'<<xi_11x11[49]<<'\t'<<xi_11x11[60]<<std::endl ;
 		outFile1<<xi_11x11[72]<<'\t'<<xi_11x11[84]<<'\t'<<xi_11x11[96]<<'\t'<<xi_11x11[109]<<'\t'<<xi_11x11[120]<<std::endl ;
-	//	outFile1<<ctr_diff.comp[0]<<'\t'<<ctr_diff.comp[1]<<'\t'<<ctr_diff.comp[2]<<std::endl ;
+*/	//	outFile1<<ctr_diff.comp[0]<<'\t'<<ctr_diff.comp[1]<<'\t'<<ctr_diff.comp[2]<<std::endl ;
 
 			for (int l=0; l<3; l++)
 				{

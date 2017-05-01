@@ -66,7 +66,7 @@ double Temp=0;
 double shear_rate = 0; //shear rate
 int ifshear = 0;// set equal to 1 for shear
 std::string dataFileName="1",dataFileName_new="1" ;
-int NrParticles=476;
+int NrParticles=1;
 double simu_time=dt;
 int step=0, nSteps=10000, frame=10;
 double vel_scale;
@@ -108,7 +108,7 @@ else {
 	//	currentLine >> particle[i].radius;
 		cout<<particle[i].radius<<endl;
 		particle[i].radius = 1.0 ;
-		particle[i].pos.comp[1] -= 13.4115 ;
+	//	particle[i].pos.comp[1] -= 13.4115 ;
 	//	particle[i].pos.comp[0] *= -1.0;
     }
 }	
@@ -1182,38 +1182,32 @@ for (int s=0; s<3; s++)
 								Friction_Tnsr_dt.comp[k][l]	+=	Resistance_Tnsr_dt.comp[l][k]	;								
 								Friction_Tnsr_dr.comp[l][k]	+=	Resistance_Tnsr_dr.comp[l][k]	;								
 							}
+	// assuming Frc_td = Frc_dt;
+	
+						for (int k=0; k<3; k++)
+							{
+								Friction_Tnsr_dt.comp[l][k]	=	Friction_Tnsr_td.comp[k][l]	;								
+								Friction_Tnsr_dr.comp[l][k]	=	Friction_Tnsr_rd.comp[k][l]	;	
+							}
+							
+
+// droping the extra terms like transpose and identity terms
 						for (int k=0; k<5; k++)
 						{								
-							 for (int m=0; m<3; m++)
+							for (int m=0; m<3; m++)
 							{
 								Friction_Tnsr_dd.comp[l][k]	+= 	Resistance_Tnsr_dt.comp[l][m]*Delj.comp[m][k];
-										Friction_Tnsr_dd.comp[l][k]	+=	(	0.5	*	(
-																				Deli.comp[l][m]	*	(	Resistance_Tnsr_td.comp[m][k]	)
-																				+
-																				Deli.comp[k][m]	*	(	Resistance_Tnsr_td.comp[m][l]	)
-																				)
-																		/*-	(1.0/3.0)	*	(
-																				Unit_tnsr_Redc.comp[l][m]	*	(	Resistance_Tnsr_td.comp[m][k]	)
-																				)*/
-																		) ;		
+								Friction_Tnsr_dd.comp[l][k]	+= 	Deli.comp[l][m]*Resistance_Tnsr_td.comp[m][k];
 									for (int n=0; n<3; n++)
 									{
-										Friction_Tnsr_dd.comp[l][k]	+=	(	0.5	*	(
-																				Deli.comp[l][m]	*	(	Resistance_Tnsr_tt.comp[m][n]	*	Delj.comp[n][k]	)
-																				+
-																				Deli.comp[k][m]	*	(	Resistance_Tnsr_tt.comp[m][n]	*	Delj.comp[n][l]	)
-																				)
-																		/*-	(1.0/3.0)	*	(
-																				Unit_tnsr_Redc.comp[l][m]	*	(	Resistance_Tnsr_tt.comp[m][n]	*	Delj.comp[n][k]	)
-																				)  */
-																		) ;		
-									}	
-							}	
+										Friction_Tnsr_dd.comp[l][k]	+=	Deli.comp[l][m]*Resistance_Tnsr_tt.comp[m][n]*Delj.comp[n][k] ;		
+									} 				
+							}
 						
 							Friction_Tnsr_dd.comp[l][k]	+=	Resistance_Tnsr_dd.comp[l][k]	;		
-						} 						
+						}						
 
-						} 
+						}
 
 
 			/*		xi_6x6[0] += zeta_6N[	9*j + i*9*NrParticles] ;  
@@ -1479,13 +1473,13 @@ for (int s=0; s<3; s++)
                        }
                cout<<std::endl; 
        }	
-		
+/*		
 	for (int i=0; i<36; i++)
 		{
 			xi_11x11[i]*=4.1419e-14;	// multiply by kbT in erg K-1
 		} 	
 
-
+*/
 		outFile1<<std::endl ;
 		outFile1<<xi_11x11[0]<<'\t'<<xi_11x11[6]<<'\t'<<xi_11x11[12]<<'\t'<<xi_11x11[18]<<'\t'<<xi_11x11[24]<<'\t'<<xi_11x11[30]<<std::endl ;
 		outFile1<<xi_11x11[1]<<'\t'<<xi_11x11[7]<<'\t'<<xi_11x11[13]<<'\t'<<xi_11x11[19]<<'\t'<<xi_11x11[25]<<'\t'<<xi_11x11[31]<<std::endl ;
@@ -1507,6 +1501,7 @@ for (int s=0; s<3; s++)
 
 // using the trick of matrix inversion by parts, since the Stresslet and flow-field switch going from FTS to FTE when doing dynamics of the aggregates
 double mu_d[6][5];
+double mu_dd[5][5];
 
 			for (int l=0; l<6; l++)
 				{
@@ -1523,16 +1518,36 @@ double mu_d[6][5];
 				//	mu_d[l][k] *= g_norm;
 					}
 				}
-				
-		outFile1 << setw(10) << Friction_Tnsr_td.comp[0][0] << "  " << setw(10) << Friction_Tnsr_td.comp[0][1] << "  " << setw(10) << Friction_Tnsr_td.comp[0][2] << "  " << setw(10) << Friction_Tnsr_td.comp[0][3] << "  " << setw(10) << Friction_Tnsr_td.comp[0][4] << endl;
-		outFile1 << setw(10) << Friction_Tnsr_td.comp[1][0] << "  " << setw(10) << Friction_Tnsr_td.comp[1][1] << "  " << setw(10) << Friction_Tnsr_td.comp[1][2] << "  " << setw(10) << Friction_Tnsr_td.comp[1][3] << "  " << setw(10) << Friction_Tnsr_td.comp[1][4] << endl;
-		outFile1 << setw(10) << Friction_Tnsr_td.comp[2][0] << "  " << setw(10) << Friction_Tnsr_td.comp[2][1] << "  " << setw(10) << Friction_Tnsr_td.comp[2][2] << "  " << setw(10) << Friction_Tnsr_td.comp[2][3] << "  " << setw(10) << Friction_Tnsr_td.comp[2][4] << endl;
+			for (int l=0; l<5; l++)
+				{
+				for (int k=0; k<5; k++)
+					{	
+						mu_dd[l][k] = Friction_Tnsr_dd.comp[l][k];
+					for (int m=0; m<3; m++)
+						{				
+							// column major format
+							mu_dd[l][k]	+=	Friction_Tnsr_dt.comp[l][m]*mu_d[m][k];
+							mu_dd[l][k]	+=	Friction_Tnsr_dr.comp[l][m]*mu_d[m+3][k];
+						}
+					}
+				}				
+		cout << setw(10) << Friction_Tnsr_td.comp[0][0] << "  " << setw(10) << Friction_Tnsr_td.comp[0][1] << "  " << setw(10) << Friction_Tnsr_td.comp[0][2] << "  " << setw(10) << Friction_Tnsr_td.comp[0][3] << "  " << setw(10) << Friction_Tnsr_td.comp[0][4] << endl;
+		cout << setw(10) << Friction_Tnsr_td.comp[1][0] << "  " << setw(10) << Friction_Tnsr_td.comp[1][1] << "  " << setw(10) << Friction_Tnsr_td.comp[1][2] << "  " << setw(10) << Friction_Tnsr_td.comp[1][3] << "  " << setw(10) << Friction_Tnsr_td.comp[1][4] << endl;
+		cout << setw(10) << Friction_Tnsr_td.comp[2][0] << "  " << setw(10) << Friction_Tnsr_td.comp[2][1] << "  " << setw(10) << Friction_Tnsr_td.comp[2][2] << "  " << setw(10) << Friction_Tnsr_td.comp[2][3] << "  " << setw(10) << Friction_Tnsr_td.comp[2][4] << endl;
  
- 		outFile1 << setw(10) << Friction_Tnsr_rd.comp[0][0] << "  " << setw(10) << Friction_Tnsr_rd.comp[0][1] << "  " << setw(10) << Friction_Tnsr_rd.comp[0][2] << "  " << setw(10) << Friction_Tnsr_rd.comp[0][3] << "  " << setw(10) << Friction_Tnsr_rd.comp[0][4] << endl;
-		outFile1 << setw(10) << Friction_Tnsr_rd.comp[1][0] << "  " << setw(10) << Friction_Tnsr_rd.comp[1][1] << "  " << setw(10) << Friction_Tnsr_rd.comp[1][2] << "  " << setw(10) << Friction_Tnsr_rd.comp[1][3] << "  " << setw(10) << Friction_Tnsr_rd.comp[1][4] << endl;
-		outFile1 << setw(10) << Friction_Tnsr_rd.comp[2][0] << "  " << setw(10) << Friction_Tnsr_rd.comp[2][1] << "  " << setw(10) << Friction_Tnsr_rd.comp[2][2] << "  " << setw(10) << Friction_Tnsr_rd.comp[2][3] << "  " << setw(10) << Friction_Tnsr_rd.comp[2][4] << endl;
+ 		cout << setw(10) << Friction_Tnsr_rd.comp[0][0] << "  " << setw(10) << Friction_Tnsr_rd.comp[0][1] << "  " << setw(10) << Friction_Tnsr_rd.comp[0][2] << "  " << setw(10) << Friction_Tnsr_rd.comp[0][3] << "  " << setw(10) << Friction_Tnsr_rd.comp[0][4] << endl;
+		cout << setw(10) << Friction_Tnsr_rd.comp[1][0] << "  " << setw(10) << Friction_Tnsr_rd.comp[1][1] << "  " << setw(10) << Friction_Tnsr_rd.comp[1][2] << "  " << setw(10) << Friction_Tnsr_rd.comp[1][3] << "  " << setw(10) << Friction_Tnsr_rd.comp[1][4] << endl;
+		cout << setw(10) << Friction_Tnsr_rd.comp[2][0] << "  " << setw(10) << Friction_Tnsr_rd.comp[2][1] << "  " << setw(10) << Friction_Tnsr_rd.comp[2][2] << "  " << setw(10) << Friction_Tnsr_rd.comp[2][3] << "  " << setw(10) << Friction_Tnsr_rd.comp[2][4] << endl;
  
 
+		cout<<std::endl ;
+		cout<<mu_d[0][0]<<'\t'<<mu_d[0][1]<<'\t'<<mu_d[0][2]<<'\t'<<mu_d[0][3]<<'\t'<<mu_d[0][4]<<std::endl ;
+		cout<<mu_d[1][0]<<'\t'<<mu_d[1][1]<<'\t'<<mu_d[1][2]<<'\t'<<mu_d[1][3]<<'\t'<<mu_d[1][4]<<std::endl ;
+		cout<<mu_d[2][0]<<'\t'<<mu_d[2][1]<<'\t'<<mu_d[2][2]<<'\t'<<mu_d[2][3]<<'\t'<<mu_d[2][4]<<std::endl ;
+		cout<<std::endl ;
+		cout<<mu_d[3][0]<<'\t'<<mu_d[3][1]<<'\t'<<mu_d[3][2]<<'\t'<<mu_d[3][3]<<'\t'<<mu_d[3][4]<<std::endl ;
+		cout<<mu_d[4][0]<<'\t'<<mu_d[4][1]<<'\t'<<mu_d[4][2]<<'\t'<<mu_d[4][3]<<'\t'<<mu_d[4][4]<<std::endl ;
+		cout<<mu_d[5][0]<<'\t'<<mu_d[5][1]<<'\t'<<mu_d[5][2]<<'\t'<<mu_d[5][3]<<'\t'<<mu_d[5][4]<<std::endl ;			
 		outFile1<<std::endl ;
 		outFile1<<mu_d[0][0]<<'\t'<<mu_d[0][1]<<'\t'<<mu_d[0][2]<<'\t'<<mu_d[0][3]<<'\t'<<mu_d[0][4]<<std::endl ;
 		outFile1<<mu_d[1][0]<<'\t'<<mu_d[1][1]<<'\t'<<mu_d[1][2]<<'\t'<<mu_d[1][3]<<'\t'<<mu_d[1][4]<<std::endl ;
@@ -1540,8 +1555,19 @@ double mu_d[6][5];
 		outFile1<<std::endl ;
 		outFile1<<mu_d[3][0]<<'\t'<<mu_d[3][1]<<'\t'<<mu_d[3][2]<<'\t'<<mu_d[3][3]<<'\t'<<mu_d[3][4]<<std::endl ;
 		outFile1<<mu_d[4][0]<<'\t'<<mu_d[4][1]<<'\t'<<mu_d[4][2]<<'\t'<<mu_d[4][3]<<'\t'<<mu_d[4][4]<<std::endl ;
-		outFile1<<mu_d[5][0]<<'\t'<<mu_d[5][1]<<'\t'<<mu_d[5][2]<<'\t'<<mu_d[5][3]<<'\t'<<mu_d[5][4]<<std::endl ;			
-		
+		outFile1<<mu_d[5][0]<<'\t'<<mu_d[5][1]<<'\t'<<mu_d[5][2]<<'\t'<<mu_d[5][3]<<'\t'<<mu_d[5][4]<<std::endl ;		
+		cout<<std::endl ;
+		cout<<mu_dd[0][0]<<'\t'<<mu_dd[0][1]<<'\t'<<mu_dd[0][2]<<'\t'<<mu_dd[0][3]<<'\t'<<mu_dd[0][4]<<std::endl ;
+		cout<<mu_dd[1][0]<<'\t'<<mu_dd[1][1]<<'\t'<<mu_dd[1][2]<<'\t'<<mu_dd[1][3]<<'\t'<<mu_dd[1][4]<<std::endl ;
+		cout<<mu_dd[2][0]<<'\t'<<mu_dd[2][1]<<'\t'<<mu_dd[2][2]<<'\t'<<mu_dd[2][3]<<'\t'<<mu_dd[2][4]<<std::endl ;
+		cout<<mu_dd[3][0]<<'\t'<<mu_dd[3][1]<<'\t'<<mu_dd[3][2]<<'\t'<<mu_dd[3][3]<<'\t'<<mu_dd[3][4]<<std::endl ;
+		cout<<mu_dd[4][0]<<'\t'<<mu_dd[4][1]<<'\t'<<mu_dd[4][2]<<'\t'<<mu_dd[4][3]<<'\t'<<mu_dd[4][4]<<std::endl ;
+		outFile1<<std::endl ;
+		outFile1<<mu_dd[0][0]<<'\t'<<mu_dd[0][1]<<'\t'<<mu_dd[0][2]<<'\t'<<mu_dd[0][3]<<'\t'<<mu_dd[0][4]<<std::endl ;
+		outFile1<<mu_dd[1][0]<<'\t'<<mu_dd[1][1]<<'\t'<<mu_dd[1][2]<<'\t'<<mu_dd[1][3]<<'\t'<<mu_dd[1][4]<<std::endl ;
+		outFile1<<mu_dd[2][0]<<'\t'<<mu_dd[2][1]<<'\t'<<mu_dd[2][2]<<'\t'<<mu_dd[2][3]<<'\t'<<mu_dd[2][4]<<std::endl ;
+		outFile1<<mu_dd[3][0]<<'\t'<<mu_dd[3][1]<<'\t'<<mu_dd[3][2]<<'\t'<<mu_dd[3][3]<<'\t'<<mu_dd[3][4]<<std::endl ;
+		outFile1<<mu_dd[4][0]<<'\t'<<mu_dd[4][1]<<'\t'<<mu_dd[4][2]<<'\t'<<mu_dd[4][3]<<'\t'<<mu_dd[4][4]<<std::endl ;
 		for (int a=0; a<3; a++)
 		{
 		for (int b=0; b<3; b++)
